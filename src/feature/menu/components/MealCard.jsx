@@ -1,5 +1,3 @@
-import React from "react";
-
 export default function MealCard({ meal }) {
     const image = meal.image || "";
     const category = meal.category ? meal.category.trim() : "";

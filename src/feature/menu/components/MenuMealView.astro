@@ -1,26 +1,6 @@
 ---
 import MealList from "./MealList.tsx";
 import { featuredMeal } from "../data";
-import { getData, type Lunch, type Menu } from "../../../lib/db";
-import "../style.css";
-
-const menus = await getData<Menu[]>("menus.json", []);
-const lunches = await getData<Lunch[]>("lunches.json", []);
-const lunchesById = new Map(lunches.map((lunch) => [lunch.id, lunch]));
-
-const initialMeals = menus
-    .map((menu) => {
-        const lunch = lunchesById.get(menu.lunch_id);
-        if (!lunch) return null;
-        return {
-            id: menu.id,
-            name: lunch.name,
-            category: "",
-            image: lunch.image_url || featuredMeal.image,
-            stockActual: menu.stock_actual,
-        };
-    })
-    .filter((meal) => meal && meal.stockActual > 0);
 ---
 
 <section
