@@ -1,0 +1,26 @@
+---
+import AppNav from "./AppNav.astro";
+import ContextHeaderProfile from "./ContextHeaderProfile.astro";
+
+interface Props {
+    text?: string;
+    icon?: string;
+    showContextHeader?: boolean;
+    navActive?: "home" | "history" | "profile";
+}
+const { text = "", icon = "", showContextHeader = true, navActive = "home" } = Astro.props as Props;
+---
+
+<main class="min-h-dvh flex flex-col lg:flex-row w-full">
+    <section class="hidden lg:flex">
+        <AppNav active={navActive} orientation="vertical" />
+    </section>
+    <section
+        class=`flex flex-col ${Astro.url.pathname === "/ticket" || Astro.url.pathname === "/ticket/" ? "" : "lg:flex-row"} flex-1 w-full justify-between`>
+    {showContextHeader && <ContextHeaderProfile icon={icon} />}
+        <slot />
+    </section>
+    <footer class="w-full z-50 mt-auto lg:hidden">
+        <AppNav active={navActive} />
+    </footer>
+</main>

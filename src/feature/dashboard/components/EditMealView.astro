@@ -1,0 +1,253 @@
+---
+import BackButton from "../../../components/BackButton.astro";
+import Plus from "../../../components/icons/Plus.astro";
+import "../style.css";
+---
+
+<section
+  class="dashboard-view flex flex-1 flex-col bg-neutral-0 px-4 py-4 gap-4 md:px-6 md:py-6 md:gap-5 lg:px-10 lg:py-8 lg:gap-6 overflow-y-auto relative"
+>
+  <!-- Botón volver -->
+  <BackButton
+    class="absolute top-4 left-4 z-10 md:top-5 md:left-5 lg:top-6 lg:left-6"
+    fallbackHref="/profile"
+    ariaLabel="Volver a la vista anterior"
+  />
+
+  <!-- Header -->
+  <header class="text-center pt-8 md:pt-0">
+    <h1
+      class="text-2xl md:text-3xl lg:text-4xl font-bold"
+      style="color: var(--color-neutral-900)"
+    >
+      Editar
+    </h1>
+  </header>
+
+  <!-- Formulario -->
+  <form
+    id="edit-meal-form"
+    class="rounded-2xl p-4 md:p-6 flex flex-col gap-4"
+    style="background: var(--color-neutral-0);"
+  >
+    <!-- Nombre -->
+    <div class="flex flex-col gap-1">
+      <label class="font-semibold">Nombre</label>
+      <input
+        id="name"
+        type="text"
+        class="rounded-xl px-4 py-2 border bg-neutral-0"
+        style="border-color: var(--color-neutral-200);"
+      />
+    </div>
+
+    <!-- Descripción -->
+    <div class="flex flex-col gap-1">
+      <label class="font-semibold">Descripción</label>
+      <textarea
+        id="description"
+        class="rounded-xl px-4 py-2 border bg-neutral-0"
+        style="border-color: var(--color-neutral-200);"
+      ></textarea>
+    </div>
+
+    <!-- Ingredientes -->
+    <div class="flex flex-col gap-1">
+      <label class="font-semibold">Ingredientes</label>
+      <input
+        id="ingredients"
+        type="text"
+        class="rounded-xl px-4 py-2 border bg-neutral-0"
+        style="border-color: var(--color-neutral-200);"
+      />
+    </div>
+
+    <!-- Cantidad -->
+    <div class="flex flex-col gap-1">
+      <label class="font-semibold">Cantidad Disponible</label>
+      <div
+        class="flex items-center justify-between rounded-xl border px-4 py-2 bg-neutral-0"
+        style="border-color: var(--color-neutral-200);"
+      >
+        <button type="button" id="minus">-</button>
+        <span id="quantity">1</span>
+        <button type="button" id="plus">+</button>
+      </div>
+    </div>
+
+    <!-- Precio -->
+    <div class="flex flex-col gap-1">
+      <label class="font-semibold">Precio</label>
+      <input
+        id="price"
+        type="number"
+        min="0"
+        step="0.01"
+        class="rounded-xl px-4 py-2 border bg-neutral-0"
+        style="border-color: var(--color-brand-line);"
+      />
+    </div>
+
+    <!-- Imagen -->
+    <div class="flex flex-col gap-2">
+      <label class="font-semibold">Imagen</label>
+      <input type="file" id="image" accept="image/*" hidden />
+      <button
+        type="button"
+        id="upload-btn"
+        class="rounded-xl border px-4 py-3 bg-neutral-0 text-left flex items-center gap-2"
+        style="border-color: var(--color-neutral-200);"
+      >
+        <Plus />
+        Adjuntar Imagen
+      </button>
+      <img id="preview" class="hidden rounded-xl max-h-40 object-cover" />
+    </div>
+
+    <!-- Botón editar -->
+    <button
+      type="submit"
+      class="w-full rounded-xl py-3 font-semibold text-white"
+      style="background: var(--color-primario);"
+    >
+      Guardar Cambios
+    </button>
+  </form>
+</section>
+
+<script lang="js">
+  document.addEventListener("astro:page-load", () => {
+    let quantity = 1;
+    let currentImageUrl = "";
+    let lunchId = null;
+
+    const nameInput = document.getElementById("name");
+    const descriptionInput = document.getElementById("description");
+    const ingredientsInput = document.getElementById("ingredients");
+    const quantityEl = document.getElementById("quantity");
+    const priceInput = document.getElementById("price");
+    const imageInput = document.getElementById("image");
+    const preview = document.getElementById("preview");
+    const uploadBtn = document.getElementById("upload-btn");
+    const form = document.getElementById("edit-meal-form");
+
+    const params = new URLSearchParams(window.location.search);
+    const paramId = Number(params.get("id"));
+    if (Number.isFinite(paramId) && paramId > 0) {
+      lunchId = paramId;
+    }
+
+    async function loadLunch() {
+      if (!lunchId) return;
+      try {
+        const response = await fetch(`/api/lunches/${lunchId}`);
+        const payload = await response.json();
+        if (!response.ok || !payload?.success) {
+          throw new Error(payload?.error || "No se pudo cargar el platillo.");
+        }
+
+        const lunch = payload.data || {};
+        nameInput.value = lunch.name || "";
+        descriptionInput.value = lunch.description || "";
+        ingredientsInput.value = Array.isArray(lunch.ingredients)
+          ? lunch.ingredients.join(", ")
+          : String(lunch.ingredients || "");
+        quantity = Number(lunch.quantity || 1);
+        quantityEl.textContent = quantity;
+        priceInput.value = String(lunch.price ?? "");
+        currentImageUrl = String(lunch.image_url || "");
+        if (currentImageUrl) {
+          preview.src = currentImageUrl;
+          preview.classList.remove("hidden");
+        }
+      } catch (error) {
+        alert(error instanceof Error ? error.message : "No se pudo cargar el platillo.");
+      }
+    }
+
+    document.getElementById("plus")?.addEventListener("click", () => {
+      quantity++;
+      quantityEl.textContent = quantity;
+    });
+
+    document.getElementById("minus")?.addEventListener("click", () => {
+      if (quantity > 1) quantity--;
+      quantityEl.textContent = quantity;
+    });
+
+    uploadBtn.addEventListener("click", () => {
+      imageInput.click();
+    });
+
+    imageInput.addEventListener("change", () => {
+      const file = imageInput.files[0];
+      if (!file) return;
+      preview.src = URL.createObjectURL(file);
+      preview.classList.remove("hidden");
+    });
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!lunchId) {
+        alert("No se encontro el platillo a editar.");
+        return;
+      }
+
+      const name = nameInput.value.trim();
+      const description = descriptionInput.value.trim();
+      const ingredients = ingredientsInput.value.trim();
+      const priceValue = priceInput.value.trim();
+      const price = Number(priceValue);
+
+      if (!name || !description || !ingredients || !priceValue || Number.isNaN(price)) {
+        alert("Completa todos los campos");
+        return;
+      }
+
+      let imageUrl = currentImageUrl;
+      const file = imageInput.files[0];
+
+      try {
+        if (file) {
+          const formData = new FormData();
+          formData.append("file", file);
+          const uploadResponse = await fetch("/api/upload", {
+            method: "POST",
+            body: formData,
+          });
+          const uploadPayload = await uploadResponse.json();
+          if (!uploadResponse.ok || !uploadPayload?.success) {
+            throw new Error(uploadPayload?.error || "No se pudo subir la imagen.");
+          }
+          imageUrl = uploadPayload.url || "";
+        }
+
+        const response = await fetch(`/api/lunches/${lunchId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name,
+            description,
+            ingredients,
+            quantity,
+            price,
+            image_url: imageUrl,
+          }),
+        });
+
+        const payload = await response.json();
+        if (!response.ok || !payload?.success) {
+          throw new Error(payload?.error || "No se pudo actualizar el platillo.");
+        }
+
+        window.location.href = "/dashboard";
+      } catch (error) {
+        alert(error instanceof Error ? error.message : "No se pudo actualizar el platillo.");
+      }
+    });
+
+    loadLunch();
+  });
+</script>

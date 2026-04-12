@@ -1,0 +1,52 @@
+---
+import PrimaryButton from "../../../components/PrimaryButton.astro";
+---
+
+<div
+    class="flex flex-col lg:flex-row lg:px-40 w-full flex-1 justify-center items-center bg-neutral-0 text-neutral-900 rounded-t-3xl gap-16 lg:gap-40"
+>
+    <section class="w-full justify-center hidden lg:flex items-center">
+        <img
+            id="ticket-lunch-image"
+            src=""            
+            alt="Imagen del platillo"
+            class="w-80 h-80 rounded-full object-cover"
+        />
+    </section>
+    <div class="flex flex-col justify-center items-center w-full gap-10 py-10">
+       <h1 class="text-h4 leading-h4 md:text-h3 md:leading-h3 lg:text-h1 lg:leading-h1 font-bold text-center text-neutral-900">Generar Ticket</h1>
+        <section
+            class="grid grid-cols-2 w-full gap-4 lg:gap-16 mb-8 justify-center items-center text-center p-5"
+            id="ticket-meta"
+        >
+            <div>
+                <h2 class="text-h5 font-bold mb-4">Nombre</h2>
+                <p class="mb-4 text-body-r" data-user-name>-</p>
+            </div>
+            <div>
+                <h2 class="text-h5 font-bold mb-4">Carrera</h2>
+                <p class="mb-4 text-body-r" data-user-carrera>-</p>
+            </div>
+            <div>
+                <h2 class="text-h5 font-bold mb-4">Platillo</h2>
+                <p class="mb-4 text-body-r" id="ticket-lunch-name">-</p>
+            </div>
+            <div>
+                <h2 class="text-h5 font-bold mb-4">Cedula</h2>
+                <p class="mb-4 text-body-r" data-user-cedula>-</p>
+            </div>
+        </section>
+        <section class="flex w-full justify-center items-center">
+            <canvas id="qr" aria-label="Codigo QR del ticket"></canvas>
+        </section>
+        <section class="flex flex-col w-full justify-center items-center gap-2">
+            <span class="text-xs text-neutral-500">Codigo de verificacion (pegar en escaner)</span>
+            <code id="qr-payload-text" class="text-xs bg-neutral-100 px-3 py-2 rounded-lg break-all text-neutral-700 max-w-full"></code>
+        </section>
+        <!-- <section class="flex w-full justify-center items-center">
+            <PrimaryButton label="Descargar Ticket" icon="download" />
+        </section> -->
+    </div>
+</div>
+<script src="./ticketSession.ts"></script>
+<script src="./../Qr.ts"></script>

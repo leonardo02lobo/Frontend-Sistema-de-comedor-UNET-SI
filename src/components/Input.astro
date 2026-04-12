@@ -1,0 +1,70 @@
+---
+import Eye from "./icons/Eye.astro";
+import EyeOff from "./icons/EyeOff.astro";
+
+export interface InputProps {
+  label: string;
+  type: "text" | "email" | "password";
+  autocomplete?: string;
+  placeholder?: string;
+  icon?: "eye";
+  name?: string;
+}
+
+const { label, type, autocomplete, placeholder, icon, name } = Astro.props;
+const isPassword = type === "password";
+const inputId = `input-${type}`;
+const hasToggle = isPassword && icon === "eye";
+---
+
+<label for={inputId} class="block space-y-2">
+  <span class="text-body-r font-semibold md:text-h6 text-neutral-700">{label}</span>
+
+  <div class="relative">
+    <input
+      id={inputId}
+      type={type}
+      name={name}
+      autocomplete={autocomplete}
+      placeholder={placeholder}
+      class:list={[
+        "w-full rounded-2xl border border-neutral-500 px-4 py-4 text-body-r md:text-h6 text-neutral-500 outline-none transition focus:border-acento",
+        hasToggle && "pr-14"
+      ]}
+    />
+    {hasToggle && (
+      <button
+        type="button"
+        data-password-toggle
+        class="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer"
+        aria-label="Mostrar contraseña"
+      >
+        <span class="eye-open" style="display: none;"><Eye /></span>
+        <span class="eye-closed"><EyeOff /></span>
+      </button>
+    )}
+  </div>
+</label>
+
+{hasToggle && (
+  <script is:inline>
+    (function () {
+      var btn = document.currentScript?.previousElementSibling?.querySelector("[data-password-toggle]");
+      if (!btn) return;
+      var wrapper = btn.closest(".relative");
+      var input = wrapper?.querySelector("input");
+      if (!input) return;
+
+      var eyeOpen = btn.querySelector(".eye-open");
+      var eyeClosed = btn.querySelector(".eye-closed");
+
+      btn.addEventListener("click", function () {
+        var showing = input.type === "password";
+        input.type = showing ? "text" : "password";
+        btn.setAttribute("aria-label", showing ? "Ocultar contraseña" : "Mostrar contraseña");
+        if (eyeOpen) eyeOpen.style.display = showing ? "block" : "none";
+        if (eyeClosed) eyeClosed.style.display = showing ? "none" : "block";
+      });
+    })();
+  </script>
+)}

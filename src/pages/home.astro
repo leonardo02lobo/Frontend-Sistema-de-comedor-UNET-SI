@@ -1,0 +1,29 @@
+---
+import Layout from "../layout/Layout.astro";
+import PrimaryButton from "../components/PrimaryButton.astro";
+---
+
+<Layout>
+  <main id="main-content" role="main" class="flex flex-col justify-evenly h-screen lg:flex-row bg-neutral-200">
+    <div class="flex items-center justify-center p-10 w-screen h-full">
+      <img
+        src="favicon.svg"
+        alt="Logo del sistema de comedor universitario UNET"
+        class="w-full max-w-80 md:max-w-125 lg:max-w-125"
+      />
+    </div>
+
+    <section
+      aria-label="Descripción de la aplicación"
+      class="bg-neutral-0 justify-center pb-16 pt-16 p-4 rounded-t-4xl lg:rounded-t-none lg:rounded-l-4xl lg:p-20 gap-4 flex flex-col">
+      <h1
+        class="text-h6 md:text-h2 lg:text-h1 leading-h6 md:leading-h2 lg:leading-h1 font-bold text-neutral-900">
+        La aplicación para el uso del comedor universitario.
+      </h1>
+      <p class="text-body-r leading-body-r md:text-h6 md:leading-h6 text-neutral-700">
+        Revisa el menú, resérvalo y presenta el ticket al momento de ingresar.
+      </p>
+      <PrimaryButton label="Comencemos" href="/login" full />
+    </section>
+  </main>
+</Layout>

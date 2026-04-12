@@ -1,0 +1,11 @@
+---
+import Layout from "../layout/Layout.astro";
+import PageShell from "../components/PageShell.astro";
+import ScannerView from "../feature/scanner/components/ScannerView.astro";
+---
+
+<Layout>
+    <PageShell showContextHeader={false} navActive="home">
+        <ScannerView />
+    </PageShell>
+</Layout>

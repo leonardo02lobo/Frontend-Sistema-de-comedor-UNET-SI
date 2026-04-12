@@ -1,0 +1,7 @@
+---
+import LunchMealClient from "./LunchMealClient.tsx";
+
+const { mealId } = Astro.props;
+---
+
+<LunchMealClient client:load mealId={mealId} />

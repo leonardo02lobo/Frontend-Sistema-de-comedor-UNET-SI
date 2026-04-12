@@ -1,0 +1,42 @@
+---
+import PrimaryButton from "../../../components/PrimaryButton.astro";
+import SecondButton from "../../../components/SecondButton.astro";
+---
+
+<div
+    class="flex flex-col lg:flex-row w-full flex-1 justify-center items-center bg-neutral-0 text-neutral-900 rounded-t-3xl gap-16 py-16 lg:gap-0 lg:py-0"
+>
+    <section class="flex w-full lg:w-[30%] h-full lg:min-h-[500px] justify-center items-center lg:px-8 py-8">
+        <img
+            src=""
+            alt="Foto de perfil"
+            class="w-48 h-48 lg:w-56 lg:h-56 rounded-full object-cover border-4 border-neutral-200"
+            id="user-avatar"
+        />
+    </section>
+    <div class="flex w-full lg:w-[70%] flex-col gap-6 lg:max-w-2xl lg:gap-8 lg:px-8 lg:py-16">
+        <section class="flex flex-col justify-center items-center text-center gap-6 lg:items-center lg:text-center lg:w-full">
+            <label class="w-full">
+                <span class="text-h5 text-neutral-500 font-bold">Nombre Completo</span>
+                <p class="text-h6 text-neutral-700 font-bold" data-user-name>-</p>
+            </label>
+            <label class="w-full">
+                <span class="text-h5 text-neutral-500 font-bold">Correo Electrónico</span>
+                <p class="text-h6 text-neutral-700 font-bold" data-user-email>-</p>
+            </label>
+            <label class="w-full">
+                <span class="text-h5 text-neutral-500 font-bold">Carrera</span>
+                <p class="text-h6 text-neutral-700 font-bold" data-user-carrera>-</p>
+            </label>
+        </section>
+
+        <section class="flex flex-col w-full px-4 gap-4 lg:flex-row">
+            <div id="dashboard-access" class="w-full hidden" aria-hidden="true">
+                <SecondButton label="Dashboard" full href="/dashboard" />
+            </div>
+            <PrimaryButton label="Salir" full Id="logout-button" />
+        </section>
+    </div>
+</div>
+
+<script src="./profileSession.ts"></script>

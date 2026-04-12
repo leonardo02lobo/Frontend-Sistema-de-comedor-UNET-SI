@@ -1,0 +1,8 @@
+.menu-scroll-area {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.menu-scroll-area::-webkit-scrollbar {
+    display: none;
+}

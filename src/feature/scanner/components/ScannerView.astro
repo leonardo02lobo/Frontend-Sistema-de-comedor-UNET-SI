@@ -1,0 +1,214 @@
+---
+import "../style.css";
+---
+
+<section class="scanner-view flex flex-1 flex-col relative overflow-hidden bg-black min-h-0">
+    <video id="scanner-video" class="absolute inset-0 w-full h-full object-cover" autoplay playsinline muted></video>
+
+    <div id="scanner-placeholder" class="absolute inset-0 flex items-center justify-center" style="background: #111;">
+        <p class="text-sm font-medium text-center px-6" style="color: rgba(255,255,255,0.6);">
+            Activando camara...
+        </p>
+    </div>
+
+    <div class="relative z-10 flex flex-1 flex-col items-center min-h-0">
+        <header class="w-full flex justify-center pt-5 md:pt-6 lg:pt-8 pb-2 shrink-0" style="position: relative; z-index: 20;">
+            <h1 class="text-2xl md:text-3xl lg:text-4xl font-bold px-5 py-1.5 md:px-6 md:py-2 rounded-full" style="color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,0.7);">
+                Escanear
+            </h1>
+        </header>
+
+        <div class="flex-1 flex flex-col items-center justify-center gap-4 md:gap-5 w-full px-5 md:px-8 min-h-0">
+            <div id="scan-window" class="scan-window relative shrink-0" style="width: min(380px, 86%); aspect-ratio: 4/3; z-index: 10;">
+                <div class="absolute top-0 left-0 w-8 h-8 md:w-9 md:h-9 border-t-[3px] border-l-[3px]" style="border-color: var(--color-primario); border-radius: 4px 0 0 0;"></div>
+                <div class="absolute top-0 right-0 w-8 h-8 md:w-9 md:h-9 border-t-[3px] border-r-[3px]" style="border-color: var(--color-primario); border-radius: 0 4px 0 0;"></div>
+                <div class="absolute bottom-0 left-0 w-8 h-8 md:w-9 md:h-9 border-b-[3px] border-l-[3px]" style="border-color: var(--color-primario); border-radius: 0 0 0 4px;"></div>
+                <div class="absolute bottom-0 right-0 w-8 h-8 md:w-9 md:h-9 border-b-[3px] border-r-[3px]" style="border-color: var(--color-primario); border-radius: 0 0 4px 0;"></div>
+
+                <div
+                    id="scan-line"
+                    class="scan-line absolute left-1 right-1 h-0.5 pointer-events-none"
+                    style="background: var(--color-primario); box-shadow: 0 0 8px 2px color-mix(in srgb, var(--color-primario) 70%, transparent);"
+                ></div>
+            </div>
+
+            <p id="scanner-status" class="text-sm md:text-base lg:text-lg font-semibold text-center shrink-0" style="color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,0.7); position: relative; z-index: 20;">
+                Coloca el codigo dentro del recuadro
+            </p>
+        </div>
+
+        <div class="w-full px-5 md:px-8 pb-5 md:pb-6 lg:pb-8 shrink-0 flex flex-col gap-2" style="max-width: 560px; position: relative; z-index: 20;">
+            <textarea
+                id="manual-qr-input"
+                rows="3"
+                class="w-full rounded-xl px-3 py-2 text-sm md:text-base"
+                placeholder="Si tu navegador no detecta QR automaticamente, pega aqui el contenido del QR."
+                style="background: rgba(255,255,255,0.92); color: #111;"
+            ></textarea>
+            <button
+                id="manual-scan-btn"
+                type="button"
+                class="demo-btn flex items-center justify-center gap-2 w-full rounded-xl px-6 py-3 md:py-3.5 text-sm md:text-base font-semibold text-white transition-colors"
+                style="background: var(--color-primario);"
+            >
+                Procesar codigo
+            </button>
+        </div>
+    </div>
+</section>
+
+<script lang="js">
+    document.addEventListener("astro:page-load", () => {
+        const video = document.getElementById("scanner-video");
+        const placeholder = document.getElementById("scanner-placeholder");
+        const statusNode = document.getElementById("scanner-status");
+        const manualInput = document.getElementById("manual-qr-input");
+        const manualButton = document.getElementById("manual-scan-btn");
+
+        let scanningLocked = false;
+        let animationFrameId = null;
+        let mediaStream = null;
+
+        function updateStatus(message, isError = false) {
+            if (!statusNode) return;
+            statusNode.textContent = message;
+            statusNode.style.color = isError ? "rgb(255, 145, 145)" : "#fff";
+        }
+
+        async function sendScanPayload(rawValue) {
+            const response = await fetch("/api/tickets/qr/scan", {
+                method: "POST",
+                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    qrCodePayload: rawValue,
+                }),
+            });
+
+            const payload = await response.json();
+            if (!response.ok || !payload?.success) {
+                throw new Error(payload?.error || "No se pudo validar el QR.");
+            }
+
+            return payload?.data;
+        }
+
+        async function handleDetectedCode(rawValue) {
+            if (scanningLocked) return;
+            scanningLocked = true;
+            updateStatus("Validando codigo QR...");
+
+            try {
+                const verification = await sendScanPayload(rawValue);
+                sessionStorage.setItem("lastScanVerification", JSON.stringify(verification));
+                updateStatus("Escaneo exitoso. Redirigiendo...");
+                stopCamera();
+                window.location.href = "/verificacion";
+            } catch (error) {
+                const message = error instanceof Error ? error.message : "No se pudo validar el QR.";
+                updateStatus(message, true);
+                scanningLocked = false;
+            }
+        }
+
+        async function startCamera() {
+            if (!(video instanceof HTMLVideoElement)) {
+                return;
+            }
+
+            try {
+                mediaStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: "environment" },
+                });
+                video.srcObject = mediaStream;
+                placeholder?.style.setProperty("display", "none");
+                updateStatus("Buscando codigo QR...");
+                startDetectionLoop();
+            } catch {
+                if (placeholder) {
+                    const textNode = placeholder.querySelector("p");
+                    if (textNode) {
+                        textNode.textContent = "Camara no disponible. Usa el campo manual para procesar el QR.";
+                    }
+                }
+                updateStatus("Camara no disponible. Usa el campo manual.", true);
+            }
+        }
+
+        function stopCamera() {
+            if (animationFrameId !== null) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            if (mediaStream) {
+                mediaStream.getTracks().forEach((track) => track.stop());
+                mediaStream = null;
+            }
+        }
+
+        function startDetectionLoop() {
+            if (!("BarcodeDetector" in window) || !(video instanceof HTMLVideoElement)) {
+                updateStatus("Tu navegador no soporta deteccion automatica. Usa el campo manual.");
+                return;
+            }
+
+            const detector = new window.BarcodeDetector({ formats: ["qr_code"] });
+
+            const detect = async () => {
+                if (scanningLocked) return;
+                if (!video.videoWidth || !video.videoHeight) {
+                    animationFrameId = requestAnimationFrame(detect);
+                    return;
+                }
+
+                try {
+                    const barcodes = await detector.detect(video);
+                    const qrCode = barcodes.find((barcode) => barcode.rawValue);
+                    if (qrCode?.rawValue) {
+                        await handleDetectedCode(qrCode.rawValue);
+                        return;
+                    }
+                } catch {
+                    // Ignoramos errores intermitentes de frame.
+                }
+
+                animationFrameId = requestAnimationFrame(detect);
+            };
+
+            animationFrameId = requestAnimationFrame(detect);
+        }
+
+        function bindManualFallback() {
+            if (!(manualButton instanceof HTMLButtonElement) || manualButton.dataset.bound === "true") {
+                return;
+            }
+
+            manualButton.dataset.bound = "true";
+            manualButton.addEventListener("click", async () => {
+                const rawValue = String(manualInput?.value || "").trim();
+                if (!rawValue) {
+                    updateStatus("Ingresa o pega un codigo QR valido.", true);
+                    return;
+                }
+                await handleDetectedCode(rawValue);
+            });
+        }
+
+        function initScanner() {
+            if (video instanceof HTMLVideoElement && video.dataset.scannerStarted === "true") {
+                return;
+            }
+            if (video instanceof HTMLVideoElement) {
+                video.dataset.scannerStarted = "true";
+            }
+            scanningLocked = false;
+            bindManualFallback();
+            startCamera();
+        }
+
+        window.addEventListener("beforeunload", stopCamera);
+        initScanner();
+    });
+</script>

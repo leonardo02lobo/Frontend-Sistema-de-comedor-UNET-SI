@@ -1,0 +1,162 @@
+---
+import History from "./icons/History.astro";
+import Home from "./icons/Home.astro";
+import Profile from "./icons/Profile.astro";
+
+export interface Props {
+    active?: "home" | "history" | "profile";
+    orientation?: "horizontal" | "vertical";
+}
+
+const { active = "home", orientation = "horizontal" } = Astro.props;
+
+const isVertical = orientation === "vertical";
+
+const items = [
+    { key: "home", label: "Hogar", href: "/" },
+    { key: "history", label: "Historial", href: "/history" },
+    { key: "profile", label: "Perfil", href: "/profile" },
+];
+
+const activeClass = "text-primario";
+const idleClass = "text-neutral-500";
+---
+
+<nav
+    aria-label="Navegación principal"
+    class:list={[
+        "bg-neutral-0 border-neutral-200",
+        isVertical
+            ? "border-r h-full"
+            : "border-t lg:border-t-0 lg:border-r lg:h-full",
+        "px-4 py-2.5"
+    ]}
+>
+    <ul
+        class:list={[
+            "w-full",
+            isVertical
+                ? "flex h-full flex-col items-center justify-start"
+                : "grid grid-cols-3 lg:flex lg:h-full lg:flex-col lg:items-center lg:justify-center",
+        ]}
+    >
+        {
+            items.map((item) => {
+                const isActive = active === item.key;
+                return (
+                    <li>
+                        <a
+                            href={item.href}
+                            data-history-nav-link={item.key === "history" ? "true" : undefined}
+                            data-menu-nav-link={item.key === "home" ? "true" : undefined}
+                            class:list={[
+                                "flex items-center justify-center",
+                                isVertical
+                                    ? "flex-col items-center justify-center text-body-l"
+                                    : "flex-col text-body-l",
+                                isActive ? activeClass : idleClass,
+                                "py-6",
+                            ]}
+                            aria-current={isActive ? "page" : undefined}
+                        >
+                            <span class="flex flex-col items-center justify-center gap-2">
+                                {item.key === "home" && <Home />}
+                                {item.key === "history" && <History />}
+                                {item.key === "profile" && <Profile />}
+                                {item.label}
+                            </span>
+                        </a>
+                    </li>
+                );
+            })
+        }
+    </ul>
+</nav>
+
+<script lang="js">
+    function getPrimaryScrollableContext() {
+        const selectors = [
+            ".menu-scroll-area",
+            ".dashboard-view",
+            ".history-scroll-area",
+        ];
+
+        for (const selector of selectors) {
+            const node = document.querySelector(selector);
+            if (!(node instanceof HTMLElement)) continue;
+            if (node.scrollHeight <= node.clientHeight) continue;
+            if (node.scrollTop <= 0) continue;
+
+            return {
+                containerSelector: selector,
+                containerScrollTop: node.scrollTop,
+            };
+        }
+
+        return {
+            containerSelector: "",
+            containerScrollTop: 0,
+        };
+    }
+
+    function normalizePath(pathname) {
+        const safePath = String(pathname || "");
+        if (safePath.length > 1 && safePath.endsWith("/")) {
+            return safePath.slice(0, -1);
+        }
+        return safePath || "/";
+    }
+
+    function rememberReturnContext(storageKey, currentPath) {
+        const scrollContext = getPrimaryScrollableContext();
+        sessionStorage.setItem(
+            storageKey,
+            JSON.stringify({
+                path: currentPath,
+                scrollY: window.scrollY,
+                containerSelector: scrollContext.containerSelector,
+                containerScrollTop: scrollContext.containerScrollTop,
+            }),
+        );
+    }
+
+    function bindHistoryNavLinkMemory() {
+        document.querySelectorAll("[data-history-nav-link='true']").forEach((link) => {
+            if (!(link instanceof HTMLAnchorElement)) return;
+            if (link.dataset.bound === "true") return;
+
+            link.dataset.bound = "true";
+            link.addEventListener("click", () => {
+                if (normalizePath(window.location.pathname) === "/history") return;
+                rememberReturnContext(
+                    "history:return",
+                    `${window.location.pathname}${window.location.search}${window.location.hash}`,
+                );
+            });
+        });
+    }
+
+    function bindMenuNavLinkMemory() {
+        document.querySelectorAll("[data-menu-nav-link='true']").forEach((link) => {
+            if (!(link instanceof HTMLAnchorElement)) return;
+            if (link.dataset.menuBound === "true") return;
+
+            link.dataset.menuBound = "true";
+            link.addEventListener("click", () => {
+                if (normalizePath(window.location.pathname) === "/") return;
+                rememberReturnContext(
+                    "menu:return",
+                    `${window.location.pathname}${window.location.search}${window.location.hash}`,
+                );
+            });
+        });
+    }
+
+    function bindNavMemory() {
+        bindHistoryNavLinkMemory();
+        bindMenuNavLinkMemory();
+    }
+
+    document.addEventListener("astro:page-load", bindNavMemory);
+    bindNavMemory();
+</script>

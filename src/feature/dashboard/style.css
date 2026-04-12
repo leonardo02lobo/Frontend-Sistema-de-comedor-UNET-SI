@@ -1,0 +1,189 @@
+.dashboard-view .back-btn:hover {
+    color: var(--color-primario) !important;
+    background: var(--color-neutral-0);
+}
+
+.dashboard-view .scan-btn:hover {
+    background: var(--color-hover) !important;
+}
+
+.dashboard-view .scan-btn:active {
+    background: var(--color-activo) !important;
+}
+
+.dashboard-view .agregar-btn:hover {
+    background: var(--color-hover) !important;
+}
+
+.dashboard-view .agregar-btn:active {
+    background: var(--color-activo) !important;
+}
+
+.dashboard-view {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.dashboard-view::-webkit-scrollbar {
+    display: none;
+}
+
+.dashboard-view .delete-modal-overlay {
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(2px);
+}
+
+.dashboard-view .delete-modal-card {
+    animation: dashboard-modal-in 0.18s ease;
+}
+
+@keyframes dashboard-modal-in {
+    from {
+        opacity: 0;
+        transform: scale(0.92);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.dashboard-view .confirm-delete-btn:hover {
+    opacity: 0.88;
+}
+
+.dashboard-view {
+  width: 100%;
+  height: 100%;
+}
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.back-btn:hover {
+  background: var(--color-neutral-200);
+}
+
+.agregar-btn:hover,
+.scan-btn:hover {
+  background: var(--color-activo);
+}
+
+.filter-btn {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--color-neutral-200);
+  font-size: 14px;
+  color: var(--color-neutral-500);
+  background: var(--color-neutral-0);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.filter-btn:hover {
+  background: var(--color-neutral-200);
+}
+
+.filter-btn.active {
+  background: var(--color-acento);
+  color: white;
+  border-color: transparent;
+}
+
+input,
+textarea {
+  outline: none;
+}
+
+input:focus,
+textarea:focus {
+  border-color: var(--color-acento);
+  box-shadow: 0 0 0 2px rgba(59, 153, 255, 0.2);
+}
+
+[data-meal] {
+  transition: all 0.2s ease;
+}
+
+[data-meal]:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card);
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.action-btn:hover {
+  background: var(--color-neutral-200);
+}
+
+.action-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.delete-modal-overlay {
+  backdrop-filter: blur(4px);
+}
+
+.delete-modal-card {
+  animation: modalFade 0.2s ease;
+}
+
+@keyframes modalFade {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.confirm-delete-btn:hover {
+  opacity: 0.9;
+}
+
+#cancel-delete-btn:hover {
+  background: var(--color-neutral-200);
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-neutral-500);
+  border-radius: 999px;
+}
+
+@media (max-width: 640px) {
+  .action-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+input,
+textarea {
+  background: var(--color-neutral-0);
+  border: 1px solid var(--color-neutral-200);
+  border-radius: 12px;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-neutral-500);
+}

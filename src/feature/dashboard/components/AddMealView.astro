@@ -1,0 +1,210 @@
+---
+import ArrowLeft from "../../../components/icons/ArrowLeft.astro";
+import Plus from "../../../components/icons/Plus.astro";
+import "../style.css";
+---
+
+<section class="dashboard-view flex flex-1 flex-col bg-neutral-0 px-4 py-4 gap-4 md:px-6 md:py-6 md:gap-5 lg:px-10 lg:py-8 lg:gap-6 overflow-y-auto">
+
+  <!-- Volver -->
+  <a href="/dashboard" class="back-btn w-fit p-2 rounded-lg transition-colors"
+     style="color: var(--color-neutral-900);">
+    <ArrowLeft />
+  </a>
+
+  <!-- Título -->
+  <h1 class="text-2xl md:text-3xl lg:text-4xl font-bold text-center"
+      style="color: var(--color-neutral-900)">
+    Agregar
+  </h1>
+
+  <!-- FORM -->
+  <form id="meal-form"
+        class="w-full max-w-2xl mx-auto flex flex-col gap-4 rounded-2xl p-5 md:p-6 lg:p-8 shadow"
+        style="background: var(--color-neutral-0)">
+
+    <!-- Nombre -->
+    <div class="flex flex-col gap-1">
+      <label class="font-medium">Nombre</label>
+      <input id="name" type="text" placeholder="Ej: Pasta con Carne"
+        class="rounded-xl border px-3 py-2"
+        style="border-color: var(--color-neutral-200)" />
+    </div>
+
+    <!-- Descripción -->
+    <div class="flex flex-col gap-1">
+      <label class="font-medium">Descripción</label>
+      <textarea id="description" placeholder="Ej. Pasta con salsa..."
+        class="rounded-xl border px-3 py-2"
+        style="border-color: var(--color-neutral-200)"></textarea>
+    </div>
+
+    <!-- Ingredientes -->
+    <div class="flex flex-col gap-1">
+      <label class="font-medium">Ingredientes</label>
+      <input id="ingredients" type="text" placeholder="Ej. Pasta, Carne..."
+        class="rounded-xl border px-3 py-2"
+        style="border-color: var(--color-neutral-200)" />
+    </div>
+
+    <!-- Cantidad -->
+    <div class="flex flex-col gap-1">
+      <label class="font-medium">Cantidad Disponible</label>
+      <input
+        id="quantity"
+        type="number"
+        min="1"
+        step="1"
+        value="1"
+        class="rounded-xl border px-3 py-2"
+        style="border-color: var(--color-brand-line)"
+      />
+    </div>
+
+    <!-- Precio -->
+    <div class="flex flex-col gap-1">
+      <label class="font-medium">Precio</label>
+      <input
+        id="price"
+        type="number"
+        min="0"
+        step="0.01"
+        placeholder="Ej: 3.50"
+        class="rounded-xl border px-3 py-2"
+        style="border-color: var(--color-brand-line)"
+      />
+    </div>
+
+    <!-- Imagen -->
+    <div class="flex flex-col gap-2">
+      <label class="font-medium">Imagen</label>
+
+      <input type="file" id="image" accept="image/*" hidden />
+
+      <button type="button" id="upload-btn"
+        class="border rounded-xl py-3 flex items-center justify-center gap-2"
+        style="border-color: var(--color-neutral-200)">
+        <Plus />
+        Adjuntar Imagen
+      </button>
+
+      <img id="preview" class="hidden rounded-xl max-h-40 object-cover" />
+    </div>
+
+    <!-- Botón -->
+    <button type="submit"
+      class="mt-4 rounded-xl py-3 font-semibold text-white transition-colors"
+      style="background: var(--color-primario)">
+      + Agregar
+    </button>
+
+  </form>
+
+</section>
+
+<script lang="js">
+  document.addEventListener("astro:page-load", () => {
+    const quantityInput = document.getElementById("quantity");
+
+    const uploadBtn = document.getElementById("upload-btn");
+    const imageInput = document.getElementById("image");
+    const preview = document.getElementById("preview");
+
+    const form = document.getElementById("meal-form");
+
+    const sanitizeQuantityValue = (value) => {
+      const parsed = Number(value);
+      if (!Number.isFinite(parsed)) return 1;
+      const rounded = Math.floor(parsed);
+      if (rounded < 1) return 1;
+      return rounded;
+    };
+
+    quantityInput.addEventListener("input", () => {
+      const safeValue = sanitizeQuantityValue(quantityInput.value);
+      quantityInput.value = String(safeValue);
+    });
+
+    quantityInput.addEventListener("blur", () => {
+      const safeValue = sanitizeQuantityValue(quantityInput.value);
+      quantityInput.value = String(safeValue);
+    });
+
+    // abrir selector imagen
+    uploadBtn.addEventListener("click", () => {
+      imageInput.click();
+    });
+
+    // preview imagen
+    imageInput.addEventListener("change", () => {
+      const file = imageInput.files[0];
+      if (!file) return;
+
+      preview.src = URL.createObjectURL(file);
+      preview.classList.remove("hidden");
+    });
+
+    // submit
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const name = document.getElementById("name").value.trim();
+      const description = document.getElementById("description").value.trim();
+      const ingredients = document.getElementById("ingredients").value.trim();
+      const priceValue = document.getElementById("price").value.trim();
+      const price = Number(priceValue);
+      const quantity = sanitizeQuantityValue(quantityInput.value);
+
+      if (!name || !description || !ingredients || !priceValue || Number.isNaN(price)) {
+        alert("Completa todos los campos");
+        return;
+      }
+
+      let imageUrl = "";
+      const file = imageInput.files[0];
+
+      try {
+        if (file) {
+          const formData = new FormData();
+          formData.append("file", file);
+
+          const uploadResponse = await fetch("/api/upload", {
+            method: "POST",
+            body: formData,
+          });
+
+          const uploadPayload = await uploadResponse.json();
+          if (!uploadResponse.ok || !uploadPayload?.success) {
+            throw new Error(uploadPayload?.error || "No se pudo subir la imagen.");
+          }
+
+          imageUrl = uploadPayload.url || "";
+        }
+
+        const response = await fetch("/api/lunches", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name,
+            description,
+            ingredients,
+            quantity,
+            price,
+            image_url: imageUrl,
+          }),
+        });
+
+        const payload = await response.json();
+        if (!response.ok || !payload?.success) {
+          throw new Error(payload?.error || "No se pudo guardar el platillo.");
+        }
+
+        window.location.href = "/dashboard";
+      } catch (error) {
+        alert(error instanceof Error ? error.message : "No se pudo guardar el platillo.");
+      }
+    });
+  });
+</script>

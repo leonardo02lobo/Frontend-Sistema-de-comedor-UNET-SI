@@ -1,0 +1,42 @@
+.scanner-view .scan-window {
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.58);
+    border-radius: 8px;
+}
+
+.scanner-view .scan-line {
+    animation: scanner-scan 2s linear infinite;
+    top: 8%;
+}
+
+@keyframes scanner-scan {
+    0% {
+        top: 8%;
+        opacity: 1;
+    }
+
+    48% {
+        opacity: 1;
+    }
+
+    50% {
+        top: 88%;
+        opacity: 0.85;
+    }
+
+    52% {
+        opacity: 1;
+    }
+
+    100% {
+        top: 8%;
+        opacity: 1;
+    }
+}
+
+.scanner-view .demo-btn:hover {
+    background: var(--color-hover) !important;
+}
+
+.scanner-view .demo-btn:active {
+    background: var(--color-activo) !important;
+}

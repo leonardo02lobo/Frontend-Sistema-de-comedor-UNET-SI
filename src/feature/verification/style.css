@@ -1,0 +1,12 @@
+.verification-view .scan-otro-btn:hover {
+    background: var(--color-hover) !important;
+}
+
+.verification-view .scan-otro-btn:active {
+    background: var(--color-activo) !important;
+}
+
+.verification-view .back-btn:hover {
+    color: var(--color-primario) !important;
+    background: var(--color-brand-surface);
+}

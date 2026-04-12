@@ -1,0 +1,48 @@
+---
+import Input from "../../../components/Input.astro";
+import PrimaryButton from "../../../components/PrimaryButton.astro";
+---
+
+<main class="flex flex-col justify-evenly h-screen lg:flex-row">
+    <div class="flex flex-col gap-4 items-center justify-center p-4 h-screen">
+        <img
+            src="favicon.svg"
+            alt="Logo del sistema de comedor universitario UNET"
+            class="w-full max-w-60 md:max-w-100"
+        />
+        <h2
+            class="text-h6 leading-h6 md:text-h3 md:leading-h3 font-bold text-neutral-900 text-center"
+        >
+            Con todo el amor para los unetenses
+        </h2>
+    </div>
+
+    <section class="w-full px-6 pb-10 lg:px-10 lg:py-12 self-center">
+        <form method="POST" class="flex flex-col gap-6" data-login-form>
+            <h2
+                class="text-h2 leading-h6 font-bold text-neutral-900 py-4 hidden lg:block"
+            >
+                Bienvenido!
+            </h2>
+
+            <Input
+                label="Correo Electrónico"
+                type="email"
+                autocomplete="email"
+                placeholder="nombre@unet.edu.ve"
+                name="correo"
+            />
+            <Input
+                label="Contraseña"
+                type="password"
+                autocomplete="current-password"
+                placeholder="Contraseña"
+                icon="eye"
+                name="contrasena"
+            />
+            <PrimaryButton label="Iniciar Sesión" full Id="login-button" buttonType="submit" />
+        </form>
+    </section>
+</main>
+
+<script type="module" src="/src/feature/login/type.ts"></script>

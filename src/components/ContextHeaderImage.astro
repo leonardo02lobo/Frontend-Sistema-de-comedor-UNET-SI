@@ -1,0 +1,24 @@
+---
+import Back from "./icons/Back.astro";
+interface Props {
+    icon?: string;
+}
+const { icon } = Astro.props as Props;
+---
+
+<header
+    class="relative lg:static w-full lg:w-auto lg:max-w-sm lg:shrink-0 lg:h-full lg:flex lg:flex-col lg:justify-center lg:items-center lg:px-3.5 lg:py-5 lg:gap-6"
+>
+    <Back />
+    <div class="flex justify-center items-center w-full h-full lg:mx-20">
+        {
+            icon && (
+                <img
+                    src="https://www.univision.com/_next/image?url=https%3A%2F%2Fst1.uvnimg.com%2Faf%2Fe1%2F34c8d9f843b4a2d51fcd42a691d1%2Fcomida-mexicana.jpg&w=1280&q=75"
+                    alt="Icono de la página"
+                    class="w-full h-full lg:w-80 lg:h-80 lg:rounded-full object-cover "
+                />
+            )
+        }
+    </div>
+</header>

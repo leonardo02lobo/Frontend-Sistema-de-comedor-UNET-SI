@@ -1,0 +1,12 @@
+---
+import PageShell from "../components/PageShell.astro";
+import ProfileMealView from "../feature/profile/components/ProfileMealView.astro";
+import Layout from "../layout/Layout.astro";
+
+---
+
+<Layout>
+    <PageShell icon="/favicon.svg" navActive="profile" showContextHeader={false}>
+        <ProfileMealView />
+    </PageShell>
+</Layout>

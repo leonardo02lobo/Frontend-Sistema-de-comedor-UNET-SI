@@ -1,0 +1,126 @@
+@import "tailwindcss";
+
+@theme {
+    /* Colores de Marca */
+	--color-primario: #FF8A00;
+	--color-acento: #3B99FF;
+
+	/* Escala de Grises */
+	--color-neutral-900: #1A0F00;
+	--color-neutral-700: #3D2B1F;
+	--color-neutral-500: #7A7067;
+	--color-neutral-200: #EBEBEB;
+	--color-neutral-0: #FFFFFF;
+
+	/* Colores Semánticos */
+	--color-exito: #27AE60;
+	--color-alerta: #E2A300;
+	--color-error: #EB5757;
+
+	/* Estados */
+	--color-hover: #FFB35C;
+	--color-activo: #D97500;
+	--color-desactivado: #EBEBEB;
+
+	/* Aliases para compatibilidad */
+	--color-surface-primary: var(--color-neutral-0);
+	--color-surface-secondary: var(--color-neutral-200);
+	--color-text-primary: var(--color-neutral-900);
+	--color-text-secondary: var(--color-neutral-700);
+	--color-text-muted: var(--color-neutral-500);
+	--color-line: var(--color-neutral-200);
+
+	/* Sombras */
+	--shadow-card: 0 14px 30px rgba(0, 0, 0, 0.2);
+
+	/* Tipografía - Headings */
+	--text-h1: 64px;
+	--leading-h1: 72px;
+	--text-h2: 56px;
+	--leading-h2: 64px;
+	--text-h3: 48px;
+	--leading-h3: 56px;
+	--text-h4: 40px;
+	--leading-h4: 48px;
+	--text-h5: 32px;
+	--leading-h5: 40px;
+	--text-h6: 24px;
+	--leading-h6: 32px;
+
+/* Tipografía - Body */
+	--text-body-l: 18px;
+	--leading-body-l: 32px;
+	--text-body-r: 16px;
+	--leading-body-r: 24px;
+	--text-body-s: 14px;
+	--leading-body-s: 24px;
+	--text-paragraph: 16px;
+	--leading-paragraph: 32px;
+
+	/* Tipografía - Extended (Tailwind equivalents) */
+	--text-xs: 0.75rem;
+	--text-sm: 0.875rem;
+	--text-base: 1rem;
+	--text-lg: 1.125rem;
+	--text-xl: 1.25rem;
+	--text-2xl: 1.5rem;
+	--text-3xl: 1.875rem;
+	--text-4xl: 2.25rem;
+	--text-5xl: 3rem;
+	--text-6xl: 3.75rem;
+ }
+
+html,
+body {
+	min-height: 100%;
+}
+
+body {
+	margin: 0;
+	font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+	background: var(--color-neutral-0);
+	color: var(--color-neutral-900);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		transition-duration: 0.01ms !important;
+		animation-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
+}
+
+@keyframes bump {
+	0% {
+		opacity: 0;
+		transform: scale(1) translateX(200px);
+	}
+	50% {
+		opacity: 0.5;
+		transform: scale(1.1);
+	}
+	100% {
+		opacity: 1;
+		transform: scale(1) translateX(0);
+	}
+}
+
+
+    .history-filter {
+		border-color: var(--color-neutral-200);
+		background: var(--color-neutral-0);
+        color: var(--color-neutral-500);
+    }
+
+    .history-filter[data-active="true"] {
+		border-color: var(--color-acento);
+		background: var(--color-acento);
+		color: var(--color-neutral-0);
+    }
+
+    .history-filter[data-active="false"]:hover {
+		border-color: var(--color-acento);
+		color: var(--color-neutral-900);
+    }

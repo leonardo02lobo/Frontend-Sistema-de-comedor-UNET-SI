@@ -1,0 +1,155 @@
+[
+  {
+    "id": 1,
+    "menu_id": 1,
+    "estado": "DELIVERED",
+    "fecha_solicitud": "2026-04-09T08:00:00.000Z",
+    "codigo_carnet": "31459733",
+    "qr_payload": "ticket-1-delivered-001",
+    "user": {
+      "fullName": "José Martínez",
+      "email": "jose@unet.edu.ve",
+      "role": "USER",
+      "cedula": "31459733",
+      "carrera": "Ingeniería en Informática"
+    },
+    "fecha_entrega": "2026-04-09T08:30:00.000Z"
+  },
+  {
+    "id": 2,
+    "menu_id": 2,
+    "estado": "PENDING",
+    "fecha_solicitud": "2026-04-09T09:15:00.000Z",
+    "codigo_carnet": "30123456",
+    "qr_payload": "ticket-2-pending-002",
+    "user": {
+      "fullName": "Laura Rodríguez",
+      "email": "laura@unet.edu.ve",
+      "role": "USER",
+      "cedula": "30123456",
+      "carrera": "Derecho"
+    }
+  },
+  {
+    "id": 3,
+    "menu_id": 3,
+    "estado": "PENDING",
+    "fecha_solicitud": "2026-04-09T10:00:00.000Z",
+    "codigo_carnet": "22345678",
+    "qr_payload": "ticket-3-pending-003",
+    "user": {
+      "fullName": "José Luis Hernández",
+      "email": "pepe@unet.edu.ve",
+      "role": "MANAGER",
+      "cedula": "22345678",
+      "carrera": "Servicios"
+    }
+  },
+  {
+    "id": 4,
+    "menu_id": 5,
+    "estado": "PENDING",
+    "fecha_solicitud": "2026-04-09T11:00:00.000Z",
+    "codigo_carnet": "31459733",
+    "qr_payload": "ticket-5-pending-004",
+    "user": {
+      "fullName": "José Martínez",
+      "email": "jose@unet.edu.ve",
+      "role": "USER",
+      "cedula": "31459733",
+      "carrera": "Ingeniería en Informática"
+    }
+  },
+  {
+    "id": 5,
+    "menu_id": 6,
+    "estado": "DELIVERED",
+    "fecha_solicitud": "2026-04-09T11:30:00.000Z",
+    "codigo_carnet": "19234567",
+    "qr_payload": "ticket-6-delivered-005",
+    "user": {
+      "fullName": "Carlos Pérez",
+      "email": "carlos@unet.edu.ve",
+      "role": "MANAGER",
+      "cedula": "19234567",
+      "carrera": "Mantenimiento"
+    },
+    "fecha_entrega": "2026-04-09T12:00:00.000Z"
+  },
+  {
+    "id": 6,
+    "menu_id": 4,
+    "estado": "PENDING",
+    "fecha_solicitud": "2026-04-09T12:15:00.000Z",
+    "codigo_carnet": "30123456",
+    "qr_payload": "ticket-4-pending-006",
+    "user": {
+      "fullName": "Laura Rodríguez",
+      "email": "laura@unet.edu.ve",
+      "role": "USER",
+      "cedula": "30123456",
+      "carrera": "Derecho"
+    }
+  },
+  {
+    "id": 7,
+    "menu_id": 8,
+    "estado": "PENDING",
+    "fecha_solicitud": "2026-04-09T13:00:00.000Z",
+    "codigo_carnet": "28456789",
+    "qr_payload": "ticket-8-pending-007",
+    "user": {
+      "fullName": "María García",
+      "email": "maria@unet.edu.ve",
+      "role": "USER",
+      "cedula": "28456789",
+      "carrera": "Medicina"
+    }
+  },
+  {
+    "id": 8,
+    "menu_id": 7,
+    "estado": "PENDING",
+    "fecha_solicitud": "2026-04-09T13:30:00.000Z",
+    "codigo_carnet": "22345678",
+    "qr_payload": "ticket-7-pending-008",
+    "user": {
+      "fullName": "José Luis Hernández",
+      "email": "pepe@unet.edu.ve",
+      "role": "MANAGER",
+      "cedula": "22345678",
+      "carrera": "Servicios"
+    }
+  },
+  {
+    "id": 9,
+    "menu_id": 1,
+    "estado": "DELIVERED",
+    "fecha_solicitud": "2026-04-09T14:00:00.000Z",
+    "codigo_carnet": "31489733",
+    "qr_payload": "ticket-1-delivered-009",
+    "user": {
+      "fullName": "Administrador Principal",
+      "email": "admin@local",
+      "role": "ADMIN",
+      "cedula": "31489733",
+      "carrera": "Administración"
+    },
+    "fecha_entrega": "2026-04-09T14:30:00.000Z"
+  },
+  {
+    "id": 10,
+    "menu_id": 2,
+    "estado": "PENDING",
+    "fecha_solicitud": "2026-04-09T14:30:00.000Z",
+    "codigo_carnet": "28456789",
+    "qr_payload": "ticket-2-pending-010",
+    "user": {
+      "fullName": "María García",
+      "email": "maria@unet.edu.ve",
+      "role": "USER",
+      "cedula": "28456789",
+      "carrera": "Medicina"
+    }
+  }
+]

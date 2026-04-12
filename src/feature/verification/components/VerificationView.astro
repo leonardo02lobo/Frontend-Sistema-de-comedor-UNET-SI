@@ -1,0 +1,190 @@
+---
+import Calendar from "../../../components/icons/Calendar.astro";
+import Clock from "../../../components/icons/Clock.astro";
+import ShoppingBagCheck from "../../../components/icons/ShoppingBagCheck.astro";
+import Scan from "../../../components/icons/Scan.astro";
+import BackButton from "../../../components/BackButton.astro";
+import "../style.css";
+---
+
+<section
+    class="verification-view flex flex-1 flex-col bg-neutral-0 px-4 py-4 gap-3 md:px-6 md:py-5 md:gap-4 lg:px-8 lg:py-6 relative"
+>
+    <BackButton
+        class="absolute top-4 left-4 z-10 md:top-5 md:left-5 lg:top-6 lg:left-6"
+        fallbackHref="/dashboard"
+        ariaLabel="Volver a la vista anterior"
+    />
+
+    <header class="w-full text-center shrink-0 pt-8 md:pt-0">
+        <h1 class="text-2xl md:text-3xl lg:text-4xl font-bold" style="color: var(--color-neutral-900)">
+            Verificacion
+        </h1>
+        <p id="verification-status" class="text-xs md:text-sm lg:text-base font-semibold mt-1" style="color: var(--color-exito)">
+            Escaneo exitoso
+        </p>
+    </header>
+
+    <div
+        class="flex-1 flex flex-col gap-3 md:gap-4 rounded-2xl md:rounded-3xl p-4 md:p-5 lg:p-8 min-h-0"
+        style="background: var(--color-neutral-0);"
+    >
+        <div class="flex items-center justify-center gap-3 md:gap-5 px-2 min-h-0" style="flex: 2;">
+            <img
+                id="verification-photo"
+                src="https://images.unsplash.com/photo-1568602471122-7832951cc4c5?auto=format&fit=crop&w=200&q=80"
+                alt="Usuario reservante"
+                class="h-14 w-14 md:h-18 md:w-18 lg:h-24 lg:w-24 rounded-full object-cover shrink-0 border-2"
+                style="border-color: var(--color-primario); width: clamp(3.5rem, 8vw, 6rem); height: clamp(3.5rem, 8vw, 6rem);"
+            />
+            <div class="flex flex-col gap-0.5 md:gap-1">
+                <span id="verification-user-name" class="text-base md:text-xl lg:text-3xl font-bold leading-tight" style="color: var(--color-neutral-900)">
+                    Usuario reservante
+                </span>
+                <span id="verification-user-id" class="text-xs md:text-sm lg:text-lg font-medium" style="color: var(--color-neutral-500)">
+                    Codigo: -
+                </span>
+                <span id="verification-user-role" class="text-xs md:text-sm lg:text-lg font-medium" style="color: var(--color-neutral-500)">
+                    Rol: -
+                </span>
+            </div>
+        </div>
+
+        <hr class="border-0 h-px w-full shrink-0" style="background: var(--color-primario); opacity: 0.35;" />
+
+        <div
+            class="min-h-0 rounded-xl md:rounded-2xl px-3 md:px-4 flex items-center justify-center gap-3 md:gap-4 bg-neutral-0"
+            style="border: 1px solid var(--color-neutral-200); flex: 1.7;"
+        >
+            <div class="p-2 md:p-2.5 rounded-xl shrink-0" style="background: color-mix(in srgb, var(--color-acento) 14%, white); color: var(--color-acento);">
+                <ShoppingBagCheck />
+            </div>
+            <div class="flex flex-col gap-0.5">
+                <span class="text-sm md:text-lg lg:text-2xl font-bold leading-tight" style="color: var(--color-neutral-900)">
+                    Acceso Valido
+                </span>
+                <span id="verification-lunch-name" class="text-xs md:text-sm lg:text-base font-semibold" style="color: var(--color-neutral-500)">
+                    Almuerzo registrado
+                </span>
+            </div>
+        </div>
+
+        <div
+            class="min-h-0 rounded-xl md:rounded-2xl px-3 md:px-4 flex items-center gap-3 bg-neutral-0"
+            style="border: 1px solid var(--color-neutral-200); flex: 1.2;"
+        >
+            <span class="shrink-0" style="color: var(--color-acento);"><Calendar /></span>
+            <span class="flex-1 font-bold text-sm md:text-base lg:text-xl" style="color: var(--color-neutral-900)">Fecha</span>
+            <span id="verification-date" class="text-xs md:text-sm lg:text-lg font-semibold" style="color: var(--color-neutral-500)">-</span>
+        </div>
+
+        <div
+            class="min-h-0 rounded-xl md:rounded-2xl px-3 md:px-4 flex items-center gap-3 bg-neutral-0"
+            style="border: 1px solid var(--color-neutral-200); flex: 1.2;"
+        >
+            <span class="shrink-0" style="color: var(--color-acento);"><Clock /></span>
+            <span class="flex-1 font-bold text-sm md:text-base lg:text-xl" style="color: var(--color-neutral-900)">Hora</span>
+            <span id="verification-time" class="text-xs md:text-sm lg:text-lg font-semibold" style="color: var(--color-neutral-500)">-</span>
+        </div>
+    </div>
+
+    <a
+        href="/escanear"
+        class="scan-otro-btn flex items-center justify-center gap-2 w-full rounded-xl px-6 py-3 md:py-3.5 lg:py-4 text-sm md:text-base lg:text-lg font-semibold text-white transition-colors shrink-0"
+        style="background: var(--color-primario);"
+    >
+        <Scan />
+        Escanear otro
+    </a>
+</section>
+
+<script lang="js">
+    document.addEventListener("astro:page-load", () => {
+        const DEFAULT_PHOTO = "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?auto=format&fit=crop&w=200&q=80";
+
+        function formatDate(dateValue) {
+            const date = new Date(dateValue);
+            if (Number.isNaN(date.getTime())) {
+                return "-";
+            }
+            return date.toLocaleDateString("es-VE", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+            });
+        }
+
+        function formatTime(dateValue) {
+            const date = new Date(dateValue);
+            if (Number.isNaN(date.getTime())) {
+                return "-";
+            }
+            return date.toLocaleTimeString("es-VE", {
+                hour: "2-digit",
+                minute: "2-digit",
+            });
+        }
+
+        function setText(id, value) {
+            const node = document.getElementById(id);
+            if (node) {
+                node.textContent = value || "-";
+            }
+        }
+
+        function loadVerification() {
+            const raw = sessionStorage.getItem("lastScanVerification");
+            if (!raw) {
+                setText("verification-status", "No hay verificacion reciente");
+                const status = document.getElementById("verification-status");
+                if (status) {
+                    status.style.color = "var(--color-error)";
+                }
+                return;
+            }
+
+            let data = null;
+            try {
+                data = JSON.parse(raw);
+            } catch {
+                data = null;
+            }
+
+            if (!data) {
+                setText("verification-status", "No se pudo leer la verificacion");
+                const status = document.getElementById("verification-status");
+                if (status) {
+                    status.style.color = "var(--color-error)";
+                }
+                return;
+            }
+
+            const scannedAt = data.scannedAt || data.ticket?.fechaEntrega || data.ticket?.fecha_entrega || data.ticket?.updatedAt || data.ticket?.fecha_solicitud;
+            const user = data.user || {};
+            const lunch = data.lunch || {};
+
+            setText("verification-user-name", user.fullName || "Usuario reservante");
+            setText(
+                "verification-user-id",
+                `Codigo: ${user.codigoCarnet || user.codigo_carnet || data.ticket?.codigoCarnet || data.ticket?.codigo_carnet || "-"}`
+            );
+            setText("verification-user-role", `Rol: ${user.role || "-"}`);
+            setText("verification-lunch-name", lunch.nombrePlatoPrincipal || lunch.name || "Almuerzo registrado");
+            setText("verification-date", formatDate(scannedAt));
+            setText("verification-time", formatTime(scannedAt));
+
+            const photoNode = document.getElementById("verification-photo");
+            if (photoNode instanceof HTMLImageElement) {
+                photoNode.src = user.photo || DEFAULT_PHOTO;
+            }
+
+            const statusNode = document.getElementById("verification-status");
+            if (statusNode) {
+                statusNode.textContent = "Escaneo exitoso";
+                statusNode.style.color = "var(--color-exito)";
+            }
+        }
+
+        loadVerification();
+    });
+</script>

@@ -1,0 +1,20 @@
+---
+import Layout from "../../layout/Layout.astro";
+import LunchMealView from "../../feature/lunch/components/LunchMealView.astro";
+import PageShell from "../../components/PageShell.astro";
+import { getData, type Lunch, type Menu } from "../../lib/db";
+
+const menuId = Number(Astro.params.lunch);
+const menus = await getData<Menu[]>("menus.json", []);
+const lunches = await getData<Lunch[]>("lunches.json", []);
+
+const menu = menus.find((item) => item.id === menuId) ?? null;
+const lunch = menu ? lunches.find((item) => item.id === menu.lunch_id) ?? null : null;
+const headerIcon = lunch?.image_url || "/favicon.svg";
+---
+
+<Layout>
+  <PageShell icon={headerIcon}>
+    <LunchMealView mealId={Astro.params.lunch} />
+  </PageShell>
+</Layout>

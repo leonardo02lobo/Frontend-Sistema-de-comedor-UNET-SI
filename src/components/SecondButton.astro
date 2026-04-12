@@ -1,0 +1,117 @@
+---
+export interface Props {
+    label: string;
+    icon?: "reserve" | "download";
+    full?: boolean;
+    href?: string;
+}
+
+const { label, icon, full = false, href } = Astro.props;
+const isLink = !!href;
+---
+
+{isLink ? (
+    <a
+        href={href}
+        class:list={[
+            "inline-flex items-center justify-center gap-2 rounded-lg bg-neutral-0 border border-neutral-900 px-4 py-2 lg:px-8 lg:py-4 text-body-r md:text-h6 font-semibold text-neutral-900 transition-colors hover:bg-neutral-500 hover:text-neutral-0",
+            full && "w-full",
+            "cursor-pointer"
+        ]}
+    >
+        {icon === "reserve" && (
+            <svg viewBox="0 0 24 24" fill="none" class="h-8 w-8 stroke-current" aria-hidden="true">
+                <path d="M4 7h16" stroke-width="2" stroke-linecap="round" />
+                <path
+                    d="M6 7l1.4 8.2a2 2 0 0 0 2 1.7h5.2a2 2 0 0 0 2-1.7L18 7"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                />
+                <circle
+                    cx="10"
+                    cy="19"
+                    r="1"
+                    fill="currentColor"
+                    stroke="none"
+                />
+                <circle
+                    cx="15"
+                    cy="19"
+                    r="1"
+                    fill="currentColor"
+                    stroke="none"
+                />
+            </svg>
+        )}
+        {icon === "download" && (
+            <svg viewBox="0 0 24 24" fill="none" class="h-4 w-4 stroke-current" aria-hidden="true">
+                <path d="M12 4v10" stroke-width="2" stroke-linecap="round" />
+                <path
+                    d="m8 10 4 4 4-4"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                />
+                <path d="M5 19h14" stroke-width="2" stroke-linecap="round" />
+            </svg>
+        )}
+        {label}
+    </a>
+) : (
+    <button
+        type="button"
+        id="dashboard"
+        class:list={[
+            "inline-flex items-center justify-center gap-2 rounded-lg bg-neutral-200 px-4 py-2 lg:px-8 lg:py-4 text-body-r md:text-h6 font-semibold text-neutral-900 transition-colors hover:bg-neutral-500 hover:text-neutral-0",
+            full && "w-full",
+            "cursor-pointer"
+        ]}
+    >
+        {icon === "reserve" && (
+            <svg viewBox="0 0 24 24" fill="none" class="h-8 w-8 stroke-current" aria-hidden="true">
+                <path d="M4 7h16" stroke-width="2" stroke-linecap="round" />
+                <path
+                    d="M6 7l1.4 8.2a2 2 0 0 0 2 1.7h5.2a2 2 0 0 0 2-1.7L18 7"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                />
+                <circle
+                    cx="10"
+                    cy="19"
+                    r="1"
+                    fill="currentColor"
+                    stroke="none"
+                />
+                <circle
+                    cx="15"
+                    cy="19"
+                    r="1"
+                    fill="currentColor"
+                    stroke="none"
+                />
+            </svg>
+        )}
+        {icon === "download" && (
+            <svg viewBox="0 0 24 24" fill="none" class="h-4 w-4 stroke-current" aria-hidden="true">
+                <path d="M12 4v10" stroke-width="2" stroke-linecap="round" />
+                <path
+                    d="m8 10 4 4 4-4"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                />
+                <path d="M5 19h14" stroke-width="2" stroke-linecap="round" />
+            </svg>
+        )}
+        {label}
+    </button>
+)}
+
+{!isLink && (
+    <script>
+        const button = document.getElementById("dashboard");
+        button?.addEventListener("click", () => {
+            window.location.href = "/dashboard";
+        });
+    </script>
+)}

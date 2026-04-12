@@ -1,0 +1,503 @@
+---
+const filters = [
+    { id: "30", label: "Ultimos 30 dias", active: true },
+    { id: "15", label: "Ultimos 15 dias", active: false },
+    { id: "month", label: "Mes", active: false },
+    { id: "day", label: "Dia", active: false },
+];
+---
+
+<section
+    class="history-view flex min-h-0 flex-1 flex-col bg-white px-5 py-5 text-neutral-900 lg:px-8 lg:py-6"
+    data-history-view
+>
+    <div class="flex min-h-0 flex-1 flex-col gap-3">
+        <header class="flex shrink-0 flex-col gap-0.5">
+            <div class="-ml-1 w-fit p-1">
+                <button
+                    type="button"
+                    data-history-back
+                    aria-label="Volver a la vista anterior"
+                    class="text-neutral-900 text-body-r font-semibold cursor-pointer hover:text-hover transition-colors duration-200"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="32"
+                        height="32"
+                        viewBox="0 0 32 32"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-left"
+                    >
+                        <path stroke="none" d="M0 0h32v32H0z" fill="none"></path>
+                        <path d="M5 16l22 0"></path>
+                        <path d="M5 16l6 6"></path>
+                        <path d="M5 16l6 -6"></path>
+                    </svg>
+                </button>
+            </div>
+            <h1 class="flex justify-center text-4xl font-bold text-neutral-900 lg:text-6xl">Historial</h1>
+            <p class="flex justify-center text-lg font-medium text-neutral-500 lg:text-xl">
+                Todos los platos servidos
+            </p>
+        </header>
+
+        <div class="history-scroll-area min-h-0 flex-1 overflow-y-auto overflow-x-hidden pr-0.5">
+            <div class="sticky top-0 z-20 flex flex-col gap-2 bg-white pb-2 pt-1">
+                <label class="relative block">
+                    <span class="sr-only">Buscar en el historial</span>
+                    <input
+                        type="search"
+                        placeholder="Buscar comida, bebida..."
+                        class="w-full rounded-lg border border-neutral-200 text-center text-base lg:text-lg px-4 py-2.5 text-neutral-900 placeholder:text-neutral-500 transition-colors focus:outline-none focus:border-acento"
+					    data-history-search
+                    />
+                    <span
+                        class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500"
+                        aria-hidden="true"
+                    >
+                        🔎
+                    </span>
+                </label>
+
+                <div class="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
+                    {
+                        filters.map((filter) => (
+                            <button
+                                type="button"
+                                class="history-filter rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors sm:px-4 sm:py-2 sm:text-sm"
+                                data-filter-button
+                                data-filter={filter.id}
+                                data-active={String(filter.active)}
+                                aria-pressed={filter.active}
+                            >
+                                {filter.label}
+                            </button>
+                        ))
+                    }
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-3 pb-4 pt-1" aria-live="polite">
+                <div data-history-groups>
+                    <p
+                        class="rounded-xl border border-dashed border-neutral-200 px-4 py-6 text-center text-sm font-medium text-neutral-500 sm:text-base"
+                    >
+                        Cargando historial...
+                    </p>
+                </div>
+
+                <p
+                    class="rounded-xl border border-dashed border-neutral-200 px-4 py-6 text-center text-sm font-medium text-neutral-500 sm:text-base"
+                    data-history-empty
+                    hidden
+                >
+                    No encontramos platos para ese filtro.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script lang="js">
+    document.addEventListener("astro:page-load", () => {
+        const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=120&q=80";
+        const millisecondsPerDay = 1000 * 60 * 60 * 24;
+
+        function normalizePath(pathname) {
+            const safePath = String(pathname || "");
+            if (safePath.length > 1 && safePath.endsWith("/")) {
+                return safePath.slice(0, -1);
+            }
+            return safePath || "/";
+        }
+
+    function escapeHtml(value) {
+        return String(value || "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
+
+    function normalizeText(value) {
+        return String(value || "")
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .trim()
+            .toLowerCase();
+    }
+
+    function formatDateHeading(date) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const dateOnly = new Date(date);
+        dateOnly.setHours(0, 0, 0, 0);
+
+        const dayDifference = Math.round((today.getTime() - dateOnly.getTime()) / millisecondsPerDay);
+        const formattedDate = new Intl.DateTimeFormat("es-VE", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+        })
+            .format(dateOnly)
+            .replace(/\./g, "");
+
+        if (dayDifference === 0) return `Hoy · ${formattedDate}`;
+        if (dayDifference === 1) return `Ayer · ${formattedDate}`;
+        return formattedDate;
+    }
+
+    function toDateKey(date) {
+        return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+    }
+
+    function parseDateKey(dateKey) {
+        const [year, monthIndex, day] = String(dateKey || "").split("-").map(Number);
+        if (!Number.isFinite(year) || !Number.isFinite(monthIndex) || !Number.isFinite(day)) {
+            return null;
+        }
+        const date = new Date(year, monthIndex, day);
+        return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    function matchesDateFilter(dateKey, filterId) {
+        const groupDate = parseDateKey(dateKey);
+        if (!groupDate) return false;
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        groupDate.setHours(0, 0, 0, 0);
+
+        const dayDifference = Math.floor((today.getTime() - groupDate.getTime()) / millisecondsPerDay);
+
+        switch (filterId) {
+            case "day":
+                return dayDifference === 0;
+            case "15":
+                return dayDifference >= 0 && dayDifference <= 15;
+            case "30":
+                return dayDifference >= 0 && dayDifference <= 30;
+            case "month":
+                return (
+                    groupDate.getMonth() === today.getMonth() &&
+                    groupDate.getFullYear() === today.getFullYear()
+                );
+            default:
+                return true;
+        }
+    }
+
+    function normalizeId(value) {
+        const numberValue = Number(value);
+        return Number.isFinite(numberValue) ? numberValue : 0;
+    }
+
+    function parseEntriesFromApi({ tickets, menus, lunches }) {
+        const menuById = new Map(
+            menus
+                .map((menu) => [normalizeId(menu.id ?? menu.ID), menu])
+                .filter(([id]) => id > 0),
+        );
+        const lunchById = new Map(
+            lunches
+                .map((lunch) => [normalizeId(lunch.id ?? lunch.ID), lunch])
+                .filter(([id]) => id > 0),
+        );
+
+        const deliveredTickets = tickets.filter(
+            (ticket) => String(ticket.estado || "").toUpperCase() === "DELIVERED",
+        );
+        const sourceTickets = deliveredTickets.length > 0 ? deliveredTickets : tickets;
+
+        return sourceTickets
+            .map((ticket) => {
+                const menu = menuById.get(normalizeId(ticket.menuId ?? ticket.menu_id)) || null;
+                const lunch = menu
+                    ? lunchById.get(normalizeId(menu.lunchId ?? menu.lunch_id)) || null
+                    : null;
+                const servedAtRaw = ticket.fechaEntrega || ticket.fecha_entrega || ticket.updatedAt || ticket.fechaSolicitud || ticket.fecha_solicitud;
+                const servedAt = new Date(servedAtRaw);
+                if (Number.isNaN(servedAt.getTime())) {
+                    return null;
+                }
+
+                return {
+                    ticketId: normalizeId(ticket.id ?? ticket.ID),
+                    name: lunch?.nombrePlatoPrincipal || lunch?.name || `Platillo #${normalizeId(ticket.id ?? ticket.ID)}`,
+                    image: lunch?.image_url || lunch?.image || FALLBACK_IMAGE,
+                    userCode: ticket.codigoCarnet || ticket.codigo_carnet || "-",
+                    servedAt,
+                    servedAtLabel: new Intl.DateTimeFormat("es-VE", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                    }).format(servedAt),
+                    dateKey: toDateKey(servedAt),
+                };
+            })
+            .filter(Boolean)
+            .sort((a, b) => b.servedAt.getTime() - a.servedAt.getTime());
+    }
+
+    function groupEntries(entries) {
+        const groupsByDate = new Map();
+        for (const entry of entries) {
+            if (!groupsByDate.has(entry.dateKey)) {
+                groupsByDate.set(entry.dateKey, []);
+            }
+            groupsByDate.get(entry.dateKey).push(entry);
+        }
+
+        return Array.from(groupsByDate.entries())
+            .map(([dateKey, items]) => {
+                const date = parseDateKey(dateKey);
+                return {
+                    dateKey,
+                    heading: date ? formatDateHeading(date) : dateKey,
+                    items,
+                };
+            })
+            .sort((a, b) => {
+                const dateA = parseDateKey(a.dateKey)?.getTime() ?? 0;
+                const dateB = parseDateKey(b.dateKey)?.getTime() ?? 0;
+                return dateB - dateA;
+            });
+    }
+
+    function renderGroups({ groupsContainer, emptyState, groups }) {
+        if (!groupsContainer) return;
+
+        if (groups.length === 0) {
+            groupsContainer.innerHTML = "";
+            if (emptyState instanceof HTMLElement) {
+                emptyState.hidden = false;
+            }
+            return;
+        }
+
+        if (emptyState instanceof HTMLElement) {
+            emptyState.hidden = true;
+        }
+
+        groupsContainer.innerHTML = groups
+            .map((group) => {
+                const itemsMarkup = group.items
+                    .map((item) => {
+                        return `
+                            <li data-history-item data-name="${escapeHtml(item.name)}">
+                                <button
+                                    type="button"
+                                    class="flex w-full items-center gap-2.5 rounded-xl border border-neutral-200 px-2.5 py-2 text-left transition-colors hover:bg-neutral-100 sm:gap-3 sm:px-3 sm:py-2"
+                                >
+                                    <img
+                                        src="${escapeHtml(item.image)}"
+                                        alt="${escapeHtml(item.name)}"
+                                        class="h-11 w-11 shrink-0 rounded-full object-cover sm:h-12 sm:w-12"
+                                    />
+                                    <span class="min-w-0 text-base font-semibold text-neutral-900 sm:text-lg lg:text-xl">
+                                        ${escapeHtml(item.name)}
+                                    </span>
+                                    <span class="ml-auto shrink-0 text-xs font-medium text-neutral-500">
+                                        ${escapeHtml(item.servedAtLabel)}
+                                    </span>
+                                </button>
+                            </li>
+                        `;
+                    })
+                    .join("");
+
+                return `
+                    <section class="flex flex-col gap-2" data-history-group data-date="${escapeHtml(group.dateKey)}">
+                        <div class="flex items-center gap-2">
+                            <span class="shrink-0 text-xs font-semibold text-acento sm:text-sm">
+                                ${escapeHtml(group.heading)}
+                            </span>
+                            <span class="h-px min-w-0 flex-1 bg-acento/80" aria-hidden="true"></span>
+                        </div>
+                        <ul class="flex flex-col gap-1.5">
+                            ${itemsMarkup}
+                        </ul>
+                    </section>
+                `;
+            })
+            .join("");
+    }
+
+    function restorePreviousContext() {
+        const rawReturn = sessionStorage.getItem("history:return");
+        if (rawReturn) {
+            try {
+                const parsed = JSON.parse(rawReturn);
+                const targetPath = String(parsed?.path || "");
+                if (targetPath && normalizePath(targetPath) !== "/history") {
+                    sessionStorage.setItem(
+                        "history:restore",
+                        JSON.stringify({
+                            path: targetPath,
+                            scrollY: Number(parsed?.scrollY) || 0,
+                            containerScrollTop: Number(parsed?.containerScrollTop) || 0,
+                            containerSelector: String(parsed?.containerSelector || ""),
+                        }),
+                    );
+                    window.location.href = targetPath;
+                    return;
+                }
+            } catch {
+                // Si falla el parseo, usamos fallback.
+            }
+        }
+
+        if (window.history.length > 1) {
+            window.history.back();
+            return;
+        }
+
+        window.location.href = "/";
+    }
+
+    function bindHistoryBackButton(view) {
+        const backButton = view.querySelector("[data-history-back]");
+        if (!(backButton instanceof HTMLButtonElement) || backButton.dataset.bound === "true") {
+            return;
+        }
+
+        backButton.dataset.bound = "true";
+        backButton.addEventListener("click", restorePreviousContext);
+    }
+
+    async function loadHistoryData(view) {
+        const groupsContainer = view.querySelector("[data-history-groups]");
+        const emptyState = view.querySelector("[data-history-empty]");
+        const searchInput = view.querySelector("[data-history-search]");
+        const filterButtons = Array.from(view.querySelectorAll("[data-filter-button]"));
+
+        let activeFilter =
+            filterButtons.find((button) => button.dataset.active === "true")?.dataset.filter || "30";
+        let allEntries = [];
+
+        const syncFilterButtons = () => {
+            filterButtons.forEach((button) => {
+                const isActive = button.dataset.filter === activeFilter;
+                button.dataset.active = String(isActive);
+                button.setAttribute("aria-pressed", String(isActive));
+            });
+        };
+
+        const applyFilters = () => {
+            const query =
+                searchInput instanceof HTMLInputElement ? normalizeText(searchInput.value) : "";
+
+            const filteredEntries = allEntries.filter((entry) => {
+                const dateMatch = matchesDateFilter(entry.dateKey, activeFilter);
+                const searchMatch =
+                    query === "" ||
+                    normalizeText(entry.name).includes(query) ||
+                    normalizeText(entry.userCode).includes(query);
+                return dateMatch && searchMatch;
+            });
+
+            renderGroups({
+                groupsContainer,
+                emptyState,
+                groups: groupEntries(filteredEntries),
+            });
+        };
+
+        syncFilterButtons();
+
+        if (searchInput instanceof HTMLInputElement && searchInput.dataset.bound !== "true") {
+            searchInput.dataset.bound = "true";
+            searchInput.addEventListener("input", applyFilters);
+        }
+
+        filterButtons.forEach((button) => {
+            if (button.dataset.bound === "true") return;
+            button.dataset.bound = "true";
+            button.addEventListener("click", () => {
+                activeFilter = button.dataset.filter || "30";
+                syncFilterButtons();
+                applyFilters();
+            });
+        });
+
+        try {
+            const [ticketsResponse, menusResponse, lunchesResponse] = await Promise.all([
+                fetch("/api/tickets", { method: "GET", credentials: "include" }),
+                fetch("/api/menus", { method: "GET", credentials: "include" }),
+                fetch("/api/lunches", { method: "GET", credentials: "include" }),
+            ]);
+
+            if (!ticketsResponse.ok || !menusResponse.ok || !lunchesResponse.ok) {
+                throw new Error("No se pudo cargar el historial real.");
+            }
+
+            const ticketsPayload = await ticketsResponse.json();
+            const menusPayload = await menusResponse.json();
+            const lunchesPayload = await lunchesResponse.json();
+
+            const tickets = Array.isArray(ticketsPayload?.data) ? ticketsPayload.data : [];
+            const menus = Array.isArray(menusPayload?.data) ? menusPayload.data : [];
+            const lunches = Array.isArray(lunchesPayload?.data) ? lunchesPayload.data : [];
+
+            allEntries = parseEntriesFromApi({ tickets, menus, lunches });
+            applyFilters();
+        } catch (error) {
+            if (groupsContainer instanceof HTMLElement) {
+                groupsContainer.innerHTML = `
+                    <p class="rounded-xl border border-dashed border-neutral-200 px-4 py-6 text-center text-sm font-medium text-neutral-500 sm:text-base">
+                        ${escapeHtml(error instanceof Error ? error.message : "No se pudo cargar el historial.")}
+                    </p>
+                `;
+            }
+            if (emptyState instanceof HTMLElement) {
+                emptyState.hidden = true;
+            }
+        }
+    }
+
+    function initHistoryView() {
+        const historyView = document.querySelector("[data-history-view]");
+        if (!(historyView instanceof HTMLElement)) return;
+        if (historyView.dataset.initialized === "true") return;
+
+        historyView.dataset.initialized = "true";
+        bindHistoryBackButton(historyView);
+        loadHistoryData(historyView);
+    }
+
+        initHistoryView();
+    });
+</script>
+
+<style>
+    .history-scroll-area {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .history-scroll-area::-webkit-scrollbar {
+        display: none;
+    }
+
+    .history-filter {
+        border-color: var(--color-neutral-200);
+        background: white;
+        color: var(--color-neutral-500);
+    }
+
+    .history-filter[data-active="true"] {
+        border-color: var(--color-acento);
+        background: var(--color-acento);
+        color: white;
+    }
+
+    .history-filter[data-active="false"]:hover {
+        border-color: var(--color-acento);
+        color: var(--color-neutral-900);
+    }
+</style>

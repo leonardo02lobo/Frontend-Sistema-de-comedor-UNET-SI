@@ -1,0 +1,128 @@
+---
+import MealList from "./MealList.tsx";
+import { featuredMeal } from "../data";
+import { getData, type Lunch, type Menu } from "../../../lib/db";
+import "../style.css";
+
+const menus = await getData<Menu[]>("menus.json", []);
+const lunches = await getData<Lunch[]>("lunches.json", []);
+const lunchesById = new Map(lunches.map((lunch) => [lunch.id, lunch]));
+
+const initialMeals = menus
+    .map((menu) => {
+        const lunch = lunchesById.get(menu.lunch_id);
+        if (!lunch) return null;
+        return {
+            id: menu.id,
+            name: lunch.name,
+            category: "",
+            image: lunch.image_url || featuredMeal.image,
+            stockActual: menu.stock_actual,
+        };
+    })
+    .filter((meal) => meal && meal.stockActual > 0);
+---
+
+<section
+    class="menu-view flex-1 min-h-0 w-full bg-white px-5 py-6 text-neutral-900 lg:px-8 lg:py-8"
+    data-menu-view
+>
+    <div class="h-full min-h-0 flex flex-col gap-5">
+        <header class="flex flex-col gap-1 shrink-0">
+            <h1 class="text-h2 leading-h2 lg:text-h1 lg:leading-h1 font-bold text-neutral-900">Menú</h1>
+            <p class="text-body-l leading-body-l md:text-h6 md:leading-h6 font-semibold">
+                Hola, <span id="menu-user-name" class="text-primario">Usuario</span>
+            </p>
+        </header>
+
+        <div class="menu-scroll-area min-h-0 flex-1 overflow-y-auto overflow-x-hidden pr-1">
+            <div class="sticky top-0 z-20 bg-white pt-10 pb-5 lg:pt-20 flex flex-col gap-3">
+                <article
+                    class="relative isolate min-w-0 overflow-visible rounded-xl bg-primario px-3 py-2.5 text-white sm:px-4 sm:py-3 lg:px-5 lg:py-3.5"
+                    data-menu-featured
+                    data-name={featuredMeal.name}
+                >
+                    <div
+                        class="relative z-0 flex min-w-0 flex-col flex-wrap lg:flex-row items-center justify-center gap-x-3 gap-y-1 pr-[5.25rem] sm:gap-x-15 sm:pr-[7rem] lg:pr-36 xl:pr-40"
+                    >
+                        <h2
+                            class="min-w-0 shrink text-lg font-bold leading-tight sm:text-2xl md:text-3xl lg:text-5xl"
+                        >
+                            {featuredMeal.name}
+                        </h2>
+                        <div
+                            class="flex shrink-0 flex-col items-center gap-0 text-left leading-tight sm:gap-0.5 "
+                        >
+                            <span class="text-xs font-bold sm:text-sm md:text-base lg:text-2xl">
+                                {featuredMeal.specialLabel}
+                            </span>
+                            <span class="text-[0.7rem] font-semibold opacity-95 sm:text-xs md:text-sm lg:text-xl">
+                                {featuredMeal.specialTime}
+                            </span>
+                        </div>
+                    </div>
+                    <img
+                        src={featuredMeal.image}
+                        alt={`Imagen de ${featuredMeal.name}`}
+                        class="absolute -top-5 right-2 z-10 h-[6.5rem] w-[6.5rem] rounded-full border-[3px] border-white object-cover shadow-[0_8px_24px_rgba(0,0,0,0.12)] sm:-top-7 sm:right-2.5 sm:h-30 sm:w-30 sm:border-4 lg:-top-21 lg:right-3 lg:h-40 lg:w-40 xl:h-43 xl:w-43"
+                    />
+                </article>
+            </div>
+            <MealList client:load fallbackImage={featuredMeal.image} />
+        </div>
+    </div>
+</section>
+
+<script lang="js">
+    document.addEventListener("astro:page-load", () => {
+        const validateCookieEndpoint = "/api/auth/validate-cookie";
+
+        function toDisplayNameFromEmail(email) {
+            const safeEmail = String(email || "").trim();
+            if (!safeEmail.includes("@")) {
+                return safeEmail || "Usuario";
+            }
+
+            const localPart = safeEmail.split("@")[0].replace(/[._]+/g, " ").trim();
+            if (!localPart) {
+                return "Usuario";
+            }
+
+            return localPart
+                .split(/\s+/)
+                .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                .join(" ");
+        }
+
+        async function loadMenuGreeting() {
+            const userNameNode = document.getElementById("menu-user-name");
+            if (!userNameNode) return;
+
+            try {
+                const response = await fetch(validateCookieEndpoint, {
+                    method: "GET",
+                    credentials: "include",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                });
+
+                if (!response.ok) {
+                    userNameNode.textContent = "Usuario";
+                    return;
+                }
+
+                const payload = await response.json();
+                const data = payload?.data || {};
+                const fullName = String(data.fullName || "");
+                const email = String(data.email || "");
+
+                userNameNode.textContent = fullName || toDisplayNameFromEmail(email);
+            } catch {
+                userNameNode.textContent = "Usuario";
+            }
+        }
+
+        loadMenuGreeting();
+    });
+</script>

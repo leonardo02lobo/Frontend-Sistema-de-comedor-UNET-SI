@@ -1,0 +1,111 @@
+---
+const pathname = Astro.url.pathname.replace(/\/+$/, "");
+const isInlineRoute =
+    pathname === "" ||
+    pathname === "/" ||
+    pathname === "/ticket" ||
+    pathname === "/profile" ||
+    pathname === "/menu" ||
+    pathname === "/history";
+---
+
+<div class:list={["w-full p-3 z-50", isInlineRoute ? "static" : "absolute lg:static"]}>
+    <button
+        type="button"
+        data-back-button
+        class="text-neutral-900 text-body-r font-semibold cursor-pointer hover:text-hover transition-colors duration-200"
+    >
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="32"
+            height="32"
+            viewBox="0 0 32 32"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-left"
+        >
+            <path stroke="none" d="M0 0h32v32H0z" fill="none"></path>
+            <path d="M5 16l22 0"></path>
+            <path d="M5 16l6 6"></path>
+            <path d="M5 16l6 -6"></path>
+        </svg>
+    </button>
+</div>
+
+<script>
+    const normalizePath = (pathname) => {
+        const safePath = String(pathname || "");
+        if (safePath.length > 1 && safePath.endsWith("/")) {
+            return safePath.slice(0, -1);
+        }
+        return safePath || "/";
+    };
+
+    const restoreStoredContext = (storageKey) => {
+        const rawValue = sessionStorage.getItem(storageKey);
+        if (!rawValue) return false;
+
+        try {
+            const parsed = JSON.parse(rawValue);
+            const targetPath = String(parsed?.path || "");
+            if (!targetPath) {
+                sessionStorage.removeItem(storageKey);
+                return false;
+            }
+
+            const targetUrl = new URL(targetPath, window.location.origin);
+            if (normalizePath(targetUrl.pathname) === normalizePath(window.location.pathname)) {
+                sessionStorage.removeItem(storageKey);
+                return false;
+            }
+
+            sessionStorage.setItem(
+                "history:restore",
+                JSON.stringify({
+                    path: targetPath,
+                    scrollY: Number(parsed?.scrollY) || 0,
+                    containerSelector: String(parsed?.containerSelector || ""),
+                    containerScrollTop: Number(parsed?.containerScrollTop) || 0,
+                }),
+            );
+            sessionStorage.removeItem(storageKey);
+            window.location.href = targetPath;
+            return true;
+        } catch {
+            sessionStorage.removeItem(storageKey);
+            return false;
+        }
+    };
+
+    document.querySelectorAll("[data-back-button]").forEach((button) => {
+        if (!(button instanceof HTMLButtonElement)) return;
+        if (button.dataset.bound === "true") return;
+
+        button.dataset.bound = "true";
+        button.addEventListener("click", () => {
+            const currentPath = normalizePath(window.location.pathname);
+
+            if (currentPath === "/") {
+                if (restoreStoredContext("menu:return")) {
+                    return;
+                }
+            }
+
+            if (currentPath === "/history") {
+                if (restoreStoredContext("history:return")) {
+                    return;
+                }
+            }
+
+            if (window.history.length > 1) {
+                window.history.back();
+                return;
+            }
+
+            window.location.href = "/";
+        });
+    });
+</script>

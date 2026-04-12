@@ -1,0 +1,451 @@
+---
+import Scan from "../../../components/icons/Scan.astro";
+import Plus from "../../../components/icons/Plus.astro";
+import ChevronRight from "../../../components/icons/ChevronRight.astro";
+import ArrowLeft from "../../../components/icons/ArrowLeft.astro";
+import ToolsKitchen2 from "../../../components/icons/ToolsKitchen2.astro";
+import ClipboardList from "../../../components/icons/ClipboardList.astro";
+import "../style.css";
+---
+
+<section
+    class="dashboard-view flex flex-1 flex-col bg-neutral-0 px-4 py-4 gap-4 md:px-6 md:py-6 md:gap-5 lg:px-10 lg:py-8 lg:gap-6 overflow-y-auto relative"
+>
+    <a
+        href="/profile"
+        aria-label="Volver al perfil"
+        class="back-btn absolute top-4 left-4 md:top-5 md:left-5 lg:top-6 lg:left-6 z-10 p-2 rounded-lg transition-colors"
+        style="color: var(--color-neutral-900);"
+    >
+        <ArrowLeft />
+    </a>
+
+    <header class="text-center shrink-0 pt-8 md:pt-0">
+        <h1 class="text-2xl md:text-3xl lg:text-4xl font-bold" style="color: var(--color-neutral-900)">
+            Dashboard
+        </h1>
+    </header>
+
+    <a
+        href="/escanear"
+        class="scan-btn flex items-center justify-center gap-2 w-full rounded-xl px-6 py-3 md:py-3.5 lg:py-4 text-base lg:text-lg font-semibold text-white transition-colors shrink-0"
+        style="background: var(--color-primario);"
+    >
+        <Scan />
+        Escanear
+    </a>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 shrink-0">
+        <div class="rounded-2xl p-4 md:p-5 lg:p-6 flex flex-col gap-4" style="background: var(--color-neutral-0);">
+            <h2 class="text-sm md:text-base lg:text-lg font-bold text-center" style="color: var(--color-neutral-900)">
+                Resumen del Dia
+            </h2>
+            <div class="flex gap-3">
+                <div class="flex flex-col items-center gap-2 flex-1 rounded-xl border px-3 py-3 md:py-4 bg-neutral-0" style="border-color: var(--color-neutral-200)">
+                    <span style="color: var(--color-primario)"><ToolsKitchen2 /></span>
+                    <span id="summary-consumed" class="text-xl md:text-2xl lg:text-3xl font-bold" style="color: var(--color-neutral-900)">0</span>
+                    <span class="text-xs font-medium text-center leading-tight" style="color: var(--color-neutral-500)">Platos<br />Consumidos</span>
+                </div>
+
+                <div class="flex flex-col items-center gap-2 flex-1 rounded-xl border px-3 py-3 md:py-4 bg-neutral-0" style="border-color: var(--color-neutral-200)">
+                    <span style="color: var(--color-primario)"><ClipboardList /></span>
+                    <span id="summary-available" class="text-xl md:text-2xl lg:text-3xl font-bold" style="color: var(--color-neutral-900)">0</span>
+                    <span class="text-xs font-medium text-center leading-tight" style="color: var(--color-neutral-500)">Platos<br />Disponibles</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="rounded-2xl p-4 md:p-5 lg:p-6 flex flex-col gap-3 md:gap-4" style="background: var(--color-neutral-0);">
+            <h2 class="text-sm md:text-base lg:text-lg font-bold text-center" style="color: var(--color-neutral-900)">
+                Estadisticas del Dia
+            </h2>
+            <div id="dashboard-bars" class="flex items-end justify-center gap-3 lg:gap-5 px-2" style="height: 120px;">
+                <p class="text-xs md:text-sm text-center w-full" style="color: var(--color-neutral-500);">Cargando estadisticas...</p>
+            </div>
+            <div id="dashboard-labels" class="flex justify-center gap-3 lg:gap-5 px-2"></div>
+        </div>
+    </div>
+
+    <div class="rounded-2xl p-4 md:p-5 lg:p-6 flex flex-col gap-3 md:gap-4" style="background: var(--color-neutral-0);">
+        <h2 class="text-sm md:text-base lg:text-lg font-bold text-center" style="color: var(--color-neutral-900)">
+            Gestion de Platillos
+        </h2>
+
+        <button
+            type="button"
+            onclick="window.location.href='/add-meal'"
+            class="agregar-btn flex items-center justify-center gap-2 w-full rounded-xl px-4 py-2.5 md:py-3 text-sm md:text-base font-semibold text-white transition-colors cursor-pointer"
+            style="background: var(--color-primario);"
+        >
+            <Plus />
+            Agregar
+        </button>
+
+        <ul id="platillos-list" class="flex flex-col gap-2">
+            <li class="rounded-xl border bg-neutral-0 px-3 py-3 text-sm text-center" style="border-color: var(--color-neutral-200); color: var(--color-neutral-500);">
+                Cargando platillos...
+            </li>
+        </ul>
+
+        <p id="dashboard-feedback" class="text-sm font-semibold text-center hidden"></p>
+
+        <a href="/meals-list" class="flex items-center justify-end gap-1 text-sm font-semibold transition-colors" style="color: var(--color-primario)">
+            Ver todos <ChevronRight />
+        </a>
+    </div>
+
+    <div id="delete-modal" class="delete-modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4" aria-modal="true" role="dialog" hidden>
+        <div class="delete-modal-card rounded-2xl bg-neutral-0 p-6 flex flex-col items-center gap-4 w-full max-w-xs shadow-[0_20px_60px_rgba(0,0,0,0.25)]">
+            <div class="flex items-center justify-center w-14 h-14 rounded-full" style="background: color-mix(in srgb, var(--color-error) 12%, white);">
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="32"
+                    height="32"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    style="color: var(--color-error)"
+                >
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path d="M12 9v4" />
+                    <path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.871l-8.106 -13.534a1.914 1.914 0 0 0 -3.274 0z" />
+                    <path d="M12 16h.01" />
+                </svg>
+            </div>
+            <p class="text-base font-semibold text-center" style="color: var(--color-neutral-900)">
+                Esta seguro de eliminar el plato?
+            </p>
+            <div class="flex flex-col gap-2 w-full">
+                <button
+                    id="confirm-delete-btn"
+                    type="button"
+                    class="confirm-delete-btn w-full cursor-pointer rounded-xl py-2.5 text-sm font-semibold transition-colors"
+                    style="background: var(--color-error); color: white;"
+                >
+                    Si, eliminar
+                </button>
+                <button
+                    id="cancel-delete-btn"
+                    type="button"
+                    class="w-full cursor-pointer rounded-xl border py-2.5 text-sm font-semibold transition-colors bg-neutral-0 hover:bg-neutral-200"
+                    style="border-color: var(--color-neutral-200); color: var(--color-neutral-900);"
+                >
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script lang="js">
+    document.addEventListener("astro:page-load", () => {
+        const dashboardChartMaxPx = 96;
+        const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=80&q=80";
+
+        const state = {
+            menus: [],
+            lunchesById: new Map(),
+            tickets: [],
+        };
+
+        let pendingDeleteId = null;
+
+        function setFeedback(message, isError = false) {
+            const feedback = document.getElementById("dashboard-feedback");
+            if (!feedback) return;
+            if (!message) {
+                feedback.textContent = "";
+                feedback.classList.add("hidden");
+                return;
+            }
+            feedback.textContent = message;
+            feedback.classList.remove("hidden");
+            feedback.style.color = isError ? "var(--color-error)" : "var(--color-exito)";
+        }
+
+        function normalizeDateKey(dateValue) {
+            if (!dateValue) return "";
+            const date = new Date(dateValue);
+            if (Number.isNaN(date.getTime())) return "";
+            return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+        }
+
+        function getTodayKey() {
+            const now = new Date();
+            return `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
+        }
+
+        function getMealsView() {
+            return state.menus
+                .map((menu) => {
+                    const lunchId = Number(menu.lunchId ?? menu.lunch_id ?? 0);
+                    const lunch = state.lunchesById.get(lunchId) || null;
+                    const stockActual = Number(menu.stockActual ?? menu.stock_actual ?? 0);
+                    const stockInicial = Number(menu.stockInicial ?? menu.stock_inicial ?? 0);
+                    const name = lunch?.nombrePlatoPrincipal || lunch?.name || `Platillo ${menu.id}`;
+                    const image = lunch?.image_url || lunch?.image || FALLBACK_IMAGE;
+                    const price = Number(lunch?.price ?? lunch?.precio ?? 0);
+                    return {
+                        menuId: Number(menu.id ?? menu.ID ?? 0),
+                        lunchId,
+                        name,
+                        image,
+                        price,
+                        stockActual,
+                        stockInicial,
+                    };
+                })
+                .filter((item) => item.menuId > 0 && item.lunchId > 0);
+        }
+
+        function renderSummary(meals) {
+            const consumedNode = document.getElementById("summary-consumed");
+            const availableNode = document.getElementById("summary-available");
+            if (!consumedNode || !availableNode) return;
+
+            const todayKey = getTodayKey();
+            const consumed = state.tickets.filter((ticket) => {
+                const status = String(ticket.estado || "").toUpperCase();
+                if (status !== "DELIVERED") return false;
+                const referenceDate = ticket.fechaEntrega || ticket.fecha_entrega || ticket.updatedAt || ticket.fechaSolicitud || ticket.fecha_solicitud;
+                return normalizeDateKey(referenceDate) === todayKey;
+            }).length;
+
+            const available = meals.reduce((acc, meal) => acc + Math.max(0, Number(meal.stockActual || 0)), 0);
+
+            consumedNode.textContent = String(consumed);
+            availableNode.textContent = String(available);
+        }
+
+        function renderStats(meals) {
+            const barsContainer = document.getElementById("dashboard-bars");
+            const labelsContainer = document.getElementById("dashboard-labels");
+            if (!barsContainer || !labelsContainer) return;
+
+            barsContainer.innerHTML = "";
+            labelsContainer.innerHTML = "";
+
+            if (meals.length === 0) {
+                barsContainer.innerHTML = `<p class="text-xs md:text-sm text-center w-full" style="color: var(--color-neutral-500);">Sin datos para mostrar.</p>`;
+                return;
+            }
+
+            const values = meals.map((meal) => Math.max(0, Number(meal.stockActual || 0)));
+            const maxValue = Math.max(...values, 1);
+
+            meals.forEach((meal) => {
+                const value = Math.max(0, Number(meal.stockActual || 0));
+                const barPx = Math.round((value / maxValue) * dashboardChartMaxPx);
+
+                const column = document.createElement("div");
+                column.className = "flex flex-col items-center flex-1 h-full justify-end";
+                column.innerHTML = `
+                    <span class="text-xs font-bold mb-1" style="color: var(--color-neutral-900)">${value}</span>
+                    <div class="w-full rounded-t-sm" style="height: ${barPx}px; background: var(--color-primario);"></div>
+                `;
+                barsContainer.appendChild(column);
+
+                const label = document.createElement("span");
+                label.className = "flex-1 text-center text-xs font-medium";
+                label.style.color = "var(--color-neutral-500)";
+                label.textContent = meal.name;
+                labelsContainer.appendChild(label);
+            });
+        }
+
+        function renderMeals(meals) {
+            const list = document.getElementById("platillos-list");
+            if (!list) return;
+
+            if (meals.length === 0) {
+                list.innerHTML = `
+                    <li class="rounded-xl border bg-neutral-0 px-3 py-3 text-sm text-center" style="border-color: var(--color-neutral-200); color: var(--color-neutral-500);">
+                        No hay platillos registrados.
+                    </li>
+                `;
+                return;
+            }
+
+            list.innerHTML = meals
+                .map((meal) => {
+                    return `
+                        <li
+                            data-platillo-id="${meal.menuId}"
+                            class="flex items-center gap-3 rounded-xl border bg-neutral-0 px-3 py-2.5 md:px-4 md:py-3"
+                            style="border-color: var(--color-neutral-200)"
+                        >
+                            <img src="${meal.image}" alt="${meal.name}" class="h-9 w-9 md:h-10 md:w-10 rounded-full object-cover shrink-0" />
+                            <div class="min-w-0 flex-1">
+                                <span class="truncate block font-semibold text-sm md:text-base" style="color: var(--color-neutral-900)" title="${meal.name}">
+                                    ${meal.name}
+                                </span>
+                                <span class="text-xs md:text-sm" style="color: var(--color-brand-muted)">
+                                    Precio: $${Number(meal.price || 0).toFixed(2)}
+                                </span>
+                                <span class="text-xs md:text-sm" style="color: var(--color-brand-muted)">
+                                    Restantes: ${meal.stockActual} / ${meal.stockInicial}
+                                </span>
+                            </div>
+                            <div class="shrink-0 flex items-center gap-1.5 md:gap-2">
+                                <a
+                                    href="/lunch/${meal.menuId}"
+                                    class="action-btn p-1.5 rounded-lg hover:bg-neutral-200 transition-colors"
+                                    aria-label="Ver ${meal.name}"
+                                    style="color: var(--color-neutral-500)"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                                </a>
+                                <a
+                                    href="/edit-meal?id=${meal.lunchId}"
+                                    class="action-btn p-1.5 rounded-lg hover:bg-neutral-200 transition-colors"
+                                    aria-label="Editar ${meal.name}"
+                                    style="color: var(--color-neutral-500)"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                </a>
+                                <button
+                                    type="button"
+                                    data-delete-id="${meal.lunchId}"
+                                    class="action-btn p-1.5 rounded-lg hover:bg-neutral-200 transition-colors"
+                                    aria-label="Eliminar ${meal.name}"
+                                    style="color: var(--color-error)"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                                </button>
+                            </div>
+                        </li>
+                    `;
+                })
+                .join("");
+        }
+
+        function renderDashboard() {
+            const meals = getMealsView();
+            renderSummary(meals);
+            renderStats(meals);
+            renderMeals(meals);
+        }
+
+        async function loadDashboardData() {
+            setFeedback("");
+            try {
+                const [menusResponse, lunchesResponse, ticketsResponse] = await Promise.all([
+                    fetch("/api/menus", { method: "GET", credentials: "include" }),
+                    fetch("/api/lunches", { method: "GET", credentials: "include" }),
+                    fetch("/api/tickets", { method: "GET", credentials: "include" }),
+                ]);
+
+                if (menusResponse.status === 401 || lunchesResponse.status === 401 || ticketsResponse.status === 401) {
+                    setFeedback("Sesion expirada. Inicia sesion nuevamente.", true);
+                    return;
+                }
+
+                if (!menusResponse.ok || !lunchesResponse.ok || !ticketsResponse.ok) {
+                    throw new Error("No se pudo cargar la informacion del dashboard.");
+                }
+
+                const menusPayload = await menusResponse.json();
+                const lunchesPayload = await lunchesResponse.json();
+                const ticketsPayload = await ticketsResponse.json();
+
+                state.menus = Array.isArray(menusPayload?.data) ? menusPayload.data : [];
+                state.tickets = Array.isArray(ticketsPayload?.data) ? ticketsPayload.data : [];
+
+                const lunches = Array.isArray(lunchesPayload?.data) ? lunchesPayload.data : [];
+                state.lunchesById = new Map(
+                    lunches
+                        .map((lunch) => [Number(lunch.id ?? lunch.ID ?? 0), lunch])
+                        .filter(([id]) => id > 0)
+                );
+
+                renderDashboard();
+            } catch (error) {
+                const message = error instanceof Error ? error.message : "Error al cargar el dashboard.";
+                setFeedback(message, true);
+            }
+        }
+
+        async function confirmDeleteMeal() {
+            if (!pendingDeleteId) return;
+            try {
+                const response = await fetch(`/api/lunches/${pendingDeleteId}`, {
+                    method: "DELETE",
+                    credentials: "include",
+                });
+                const payload = await response.json();
+                if (!response.ok || !payload?.success) {
+                    throw new Error(payload?.error || "No se pudo eliminar el platillo.");
+                }
+
+                setFeedback("Platillo eliminado correctamente.");
+                await loadDashboardData();
+            } catch (error) {
+                const message = error instanceof Error ? error.message : "No se pudo eliminar el platillo.";
+                setFeedback(message, true);
+            } finally {
+                closeDeleteModal();
+            }
+        }
+
+        function openDeleteModal(id) {
+            pendingDeleteId = id;
+            const modal = document.getElementById("delete-modal");
+            modal?.removeAttribute("hidden");
+        }
+
+        function closeDeleteModal() {
+            pendingDeleteId = null;
+            const modal = document.getElementById("delete-modal");
+            modal?.setAttribute("hidden", "");
+        }
+
+        function bindDashboardEvents() {
+            const list = document.getElementById("platillos-list");
+            const modal = document.getElementById("delete-modal");
+            const confirmBtn = document.getElementById("confirm-delete-btn");
+            const cancelBtn = document.getElementById("cancel-delete-btn");
+
+            if (list && list.dataset.bound !== "true") {
+                list.dataset.bound = "true";
+                list.addEventListener("click", (event) => {
+                    const target = event.target instanceof Element ? event.target : null;
+                    if (!target) return;
+                    const deleteButton = target.closest("[data-delete-id]");
+                    if (!deleteButton) return;
+                    const id = Number(deleteButton.dataset.deleteId);
+                    if (!Number.isFinite(id) || id <= 0) return;
+                    openDeleteModal(id);
+                });
+            }
+
+            if (confirmBtn && confirmBtn.dataset.bound !== "true") {
+                confirmBtn.dataset.bound = "true";
+                confirmBtn.addEventListener("click", confirmDeleteMeal);
+            }
+
+            if (cancelBtn && cancelBtn.dataset.bound !== "true") {
+                cancelBtn.dataset.bound = "true";
+                cancelBtn.addEventListener("click", closeDeleteModal);
+            }
+
+            if (modal && modal.dataset.bound !== "true") {
+                modal.dataset.bound = "true";
+                modal.addEventListener("click", (event) => {
+                    if (event.target === modal) {
+                        closeDeleteModal();
+                    }
+                });
+            }
+        }
+
+        async function initDashboard() {
+            bindDashboardEvents();
+            await loadDashboardData();
+        }
+
+        initDashboard();
+    });
+</script>

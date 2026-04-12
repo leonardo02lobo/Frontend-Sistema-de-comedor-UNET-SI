@@ -1,0 +1,11 @@
+---
+import Layout from "../layout/Layout.astro";
+import PageShell from "../components/PageShell.astro";
+import DashboardView from "../feature/dashboard/components/DashboardView.astro";
+---
+
+<Layout>
+    <PageShell showContextHeader={false} navActive="home">
+        <DashboardView />
+    </PageShell>
+</Layout>

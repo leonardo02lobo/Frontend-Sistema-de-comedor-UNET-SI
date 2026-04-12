@@ -1,0 +1,109 @@
+---
+import { ClientRouter } from "astro:transitions";
+import { getData, type SessionEntry } from "../lib/db";
+import "../styles/global.css";
+
+interface Props {
+	title?: string;
+	disableAuthGuard?: boolean;
+}
+
+const {
+	title = "Sistema de gestion de comedor universitario UNET",
+	disableAuthGuard = false,
+} = Astro.props as Props;
+
+const protectedPaths = new Set([
+	"/dashboard",
+	"/meals-list",
+	"/add-meal",
+	"/edit-meal",
+	"/escanear",
+	"/verificacion",
+	"/history",
+]);
+
+const currentPath = Astro.url.pathname;
+const shouldCheckAuth = !disableAuthGuard && protectedPaths.has(currentPath);
+
+if (shouldCheckAuth) {
+	const sessionId = Astro.cookies.get("session_id")?.value;
+	const sessions = await getData<SessionEntry[]>("sessions.json", []);
+	const isValid = !!sessionId && sessions.some((entry) => entry.id === sessionId);
+	if (!isValid) {
+		return Astro.redirect("/home");
+	}
+}
+---
+
+<html lang="es">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" href="/favicon.ico" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<ClientRouter />
+		<title>{title}</title>
+		{!disableAuthGuard && <script type="module" src="/src/script/validation.ts"></script>}
+		<script lang="js">
+			document.addEventListener("astro:page-load", () => {
+				function normalizePath(pathname) {
+					const safePath = String(pathname || "");
+					if (safePath.length > 1 && safePath.endsWith("/")) {
+						return safePath.slice(0, -1);
+					}
+					return safePath || "/";
+				}
+
+				function tryRestoreHistoryPosition() {
+					const rawRestore = sessionStorage.getItem("history:restore");
+					if (!rawRestore) return;
+
+					let restore = null;
+					try {
+						restore = JSON.parse(rawRestore);
+					} catch {
+						sessionStorage.removeItem("history:restore");
+						return;
+					}
+
+					const targetPath = String(restore?.path || "");
+					if (!targetPath) {
+						sessionStorage.removeItem("history:restore");
+						return;
+					}
+
+					const targetUrl = new URL(targetPath, window.location.origin);
+					if (normalizePath(targetUrl.pathname) !== normalizePath(window.location.pathname)) {
+						return;
+					}
+
+					const applyRestore = () => {
+						window.scrollTo(0, Number(restore?.scrollY) || 0);
+
+						const selector = String(restore?.containerSelector || "");
+						if (selector) {
+							const container = document.querySelector(selector);
+							if (container instanceof HTMLElement) {
+								container.scrollTop = Number(restore?.containerScrollTop) || 0;
+							}
+						}
+
+						sessionStorage.removeItem("history:restore");
+					};
+
+					// Dos frames para esperar render + transicion de Astro.
+					requestAnimationFrame(() => {
+						requestAnimationFrame(applyRestore);
+					});
+				}
+
+				tryRestoreHistoryPosition();
+			});
+		</script>
+	</head>
+	<body>
+		<slot />
+	</body>
+</html>
