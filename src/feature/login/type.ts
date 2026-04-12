@@ -17,9 +17,16 @@ loginForm?.addEventListener("submit", async (e) => {
 
     if (response.ok) {
         const data = await response.json();
-        localStorage.setItem("userData", JSON.stringify(data.data));
+        console.log("Login successful:", data.data);
+        localStorage.setItem("userData", JSON.stringify({
+            carrera: data.data.carrera,
+            email: data.data.email,
+            fullName: data.data.fullName,
+            role: data.data.role,
+            username: data.data.username,
+        }));
         window.location.href = "/";
     } else {
-        alert("Login failed. Please check your credentials and try again.");
+        alert("Login fallido. Por favor, verifica tus credenciales.");
     }
 })
