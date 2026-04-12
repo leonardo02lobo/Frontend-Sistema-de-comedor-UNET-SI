@@ -20,3 +20,22 @@ export interface LunchTicket {
   idLabel: string;
   barcodeDigits: string;
 }
+
+export async function getAllLunches() {
+  const lunchesResponse = await fetch("http://localhost:3001/api/lunches", {
+    method: "GET",
+  });
+
+  if (lunchesResponse.status === 401) {
+    throw new Error("Unauthorized");
+  }
+
+  if (!lunchesResponse.ok) {
+    throw new Error("Request failed");
+  }
+
+  const lunchesPayload = await lunchesResponse.json();
+  const lunchItems = Array.isArray(lunchesPayload?.data) ? lunchesPayload.data : [];
+  return lunchItems;
+}
+
