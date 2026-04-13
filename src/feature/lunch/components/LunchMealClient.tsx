@@ -71,7 +71,6 @@ const normalizeIngredients = (value: unknown): string[] => {
 			.map((item) => item.trim())
 			.filter(Boolean);
 	}
-
 	return [];
 };
 

@@ -1,3 +1,5 @@
+import { URL_BASE } from "../../models/type";
+
 const loginForm = document.querySelector<HTMLFormElement>('[data-login-form]');
 
 loginForm?.addEventListener("submit", async (e) => {
@@ -6,7 +8,7 @@ loginForm?.addEventListener("submit", async (e) => {
     const username = formData.get("correo") as string;
     const password = formData.get("contrasena") as string;
 
-    const response = await fetch("http://localhost:3001/api/login", {
+    const response = await fetch(`${URL_BASE}/login`, {
         method: "POST",
         credentials: "include",
         headers: {
@@ -17,13 +19,13 @@ loginForm?.addEventListener("submit", async (e) => {
 
     if (response.ok) {
         const data = await response.json();
-        console.log("Login successful:", data.data);
         localStorage.setItem("userData", JSON.stringify({
             carrera: data.data.carrera,
             email: data.data.email,
             fullName: data.data.fullName,
             role: data.data.role,
             username: data.data.username,
+            imageURL: data.data.imageURL,
         }));
         window.location.href = "/";
     } else {
