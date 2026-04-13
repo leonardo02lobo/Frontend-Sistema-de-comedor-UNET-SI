@@ -1,4 +1,6 @@
-export type NavKey = "home" | "history" | "profile";
+import { URL_BASE, type NavKey } from "../../models/type";
+
+
 
 export interface NavItem {
   key: NavKey;
@@ -22,7 +24,7 @@ export interface LunchTicket {
 }
 
 export async function getAllLunches() {
-  const lunchesResponse = await fetch("http://localhost:3001/api/lunches", {
+  const lunchesResponse = await fetch(`${URL_BASE}/lunches`, {
     method: "GET",
   });
 
