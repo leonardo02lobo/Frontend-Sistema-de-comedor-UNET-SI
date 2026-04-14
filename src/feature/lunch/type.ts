@@ -1,4 +1,4 @@
-import { URL_BASE, type NavKey } from "../../models/type";
+import { URL_BASE, type ApiResponse, type Lunch, type NavKey } from "../../models/type";
 
 
 
@@ -23,20 +23,21 @@ export interface LunchTicket {
   barcodeDigits: string;
 }
 
-export async function getAllLunches() {
+export async function getAllLunches(): Promise<Lunch[]> {
   const lunchesResponse = await fetch(`${URL_BASE}/lunches`, {
     method: "GET",
+    credentials: "include",
   });
 
   if (lunchesResponse.status === 401) {
-    throw new Error("Unauthorized");
+    throw new Error("Sesion expirada. Inicia sesion nuevamente.");
   }
 
   if (!lunchesResponse.ok) {
-    throw new Error("Request failed");
+    throw new Error("No se pudo cargar el menu.");
   }
 
-  const lunchesPayload = await lunchesResponse.json();
+  const lunchesPayload = (await lunchesResponse.json()) as ApiResponse<Lunch[]>;
   const lunchItems = Array.isArray(lunchesPayload?.data) ? lunchesPayload.data : [];
   return lunchItems;
 }

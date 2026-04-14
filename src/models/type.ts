@@ -6,37 +6,63 @@ export type NavKey = "home" | "history" | "profile";
 
 export interface Admin {
   email: string;
-  password_hash: string;
   role: UserRole;
-  full_name: string;
+  fullName: string;
   cedula: string;
-  carrera?: string;
-  imageURL: string;
+  carrera: string;
+  imageURL?: string;
 }
 
 export interface Lunch {
   id: number;
   status: LunchStatus;
-  nombre_plato_principal: string;
+  nombrePlatoPrincipal: string;
   image?: string;
-  stock_inicial: number;
-  stock_actual: number;
+  stockInicial: number;
+  stockActual: number;
   descripcion?: string;
   ingredientes: string[];
   precio: number;
-  created_at: Date | string;
-  updated_at: Date | string;
+  createdAt: Date | string;
+  updatedAt: Date | string;
 }
 
 export interface Ticket {
   id: number;
-  codigo_carnet: string;
-  fecha_solicitud: Date | string;
-  fecha_entrega?: Date | string;
+  codigoCarnet: string;
+  fechaSolicitud: Date | string;
+  fechaEntrega?: Date | string;
   estado: TicketStatus;
-  lunch_id: number;
-  validado_por_id?: number;
-  user?: Admin;
+  lunchId: number;
+  validadoPorId?: number;
   lunch?: Lunch;
-  admin?: Admin;
+  validadoPor?: Admin;
+}
+
+export interface UserCookieData {
+  email?: string;
+  role?: UserRole;
+  fullName?: string;
+  roleLabel?: string;
+  carrera?: string;
+  career?: string;
+  cedula?: string;
+}
+
+export interface TicketCreateRequest {
+  lunchId: number;
+  codigoCarnet: string;
+}
+
+export interface TicketQRCodeData {
+  ticket: Ticket;
+  qrCodePayload: string;
+}
+
+export interface ApiResponse<T> {
+  success: boolean;
+  message?: string;
+  data?: T;
+  error?: string;
+  meta?: unknown;
 }
