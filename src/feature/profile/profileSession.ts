@@ -9,5 +9,5 @@ if(userData) {
     userName.textContent = userData.fullName || "-";
     userEmail.textContent = userData.email || "-";
     carrier.textContent = userData.carrera || "-";
-    userImage.src = userData.image || "/";
+    userImage.src = userData.imageURL || "/";
 }

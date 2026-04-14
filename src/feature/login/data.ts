@@ -5,7 +5,7 @@ const loginForm = document.querySelector<HTMLFormElement>('[data-login-form]');
 loginForm?.addEventListener("submit", async (e) => {
     e.preventDefault();
     const formData = new FormData(loginForm);
-    const username = formData.get("correo") as string;
+    const email = formData.get("correo") as string;
     const password = formData.get("contrasena") as string;
 
     const response = await fetch(`${URL_BASE}/login`, {
@@ -14,7 +14,7 @@ loginForm?.addEventListener("submit", async (e) => {
         headers: {
             "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ email, password }),
     });
 
     if (response.ok) {
@@ -24,8 +24,7 @@ loginForm?.addEventListener("submit", async (e) => {
             email: data.data.email,
             fullName: data.data.fullName,
             role: data.data.role,
-            username: data.data.username,
-            imageURL: data.data.imageURL,
+            imageURL: data.data.imageURL || data.data.image || "",
         }));
         window.location.href = "/";
     } else {

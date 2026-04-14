@@ -1,45 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
-
-type LunchApiItem = {
-	id?: number | string | null;
-	ID?: number | string | null;
-	nombrePlatoPrincipal?: string | null;
-	name?: string | null;
-	descripcion?: string | null;
-	description?: string | null;
-	ingredientes?: string[] | string | null;
-	ingredients?: string[] | string | null;
-	image_url?: string | null;
-	image?: string | null;
-	precio?: number | string | null;
-	price?: number | string | null;
-};
-
-type MenuApiItem = {
-	id?: number | string | null;
-	ID?: number | string | null;
-	lunchId?: number | string | null;
-	lunch_id?: number | string | null;
-	stockActual?: number | string | null;
-	stock_actual?: number | string | null;
-	categoria?: string | null;
-	category?: string | null;
-};
-
-type UserCookieData = {
-	email?: string;
-	role?: string;
-};
+import { type Lunch } from "../../../models/type";
+import { createTicket, getLunchById, validateCookie } from "../api";
 
 type LunchMeal = {
-	menuId: number | null;
-	lunchId: number | null;
+	id: number | null;
 	title: string;
 	description: string;
 	ingredients: string[];
 	imageUrl: string;
 	price: number | null;
-	category: string;
 	stockActual: number;
 };
 
@@ -49,81 +18,54 @@ type LunchMealClientProps = {
 
 
 const DEFAULT_MEAL: LunchMeal = {
-	menuId: null,
-	lunchId: null,
+	id: null,
 	title: "Plato no disponible",
 	description: "No se encontro informacion del plato seleccionado.",
 	ingredients: [],
 	imageUrl: "",
 	price: null,
-	category: "",
 	stockActual: 0,
 };
 
-const normalizeIngredients = (value: unknown): string[] => {
-	if (Array.isArray(value)) {
-		return value.map((item) => String(item).trim()).filter(Boolean);
+const mapLunchToView = (lunch: Lunch): LunchMeal => ({
+	id: lunch.id,
+	title: lunch.nombrePlatoPrincipal || DEFAULT_MEAL.title,
+	description: lunch.descripcion || DEFAULT_MEAL.description,
+	ingredients: Array.isArray(lunch.ingredientes) ? lunch.ingredientes : [],
+	imageUrl: lunch.image || "",
+	price: Number.isFinite(Number(lunch.precio)) ? Number(lunch.precio) : null,
+	stockActual: Number.isFinite(Number(lunch.stockActual)) ? Number(lunch.stockActual) : 0,
+});
+
+const resolveCodigoCarnet = (sessionCedula?: string): string => {
+	const fromSession = String(sessionCedula || "").trim();
+	if (fromSession) {
+		return fromSession;
 	}
 
-	if (typeof value === "string") {
-		return value
-			.split(",")
-			.map((item) => item.trim())
-			.filter(Boolean);
+	try {
+		const localRaw = window.localStorage.getItem("userData");
+		if (!localRaw) {
+			return "";
+		}
+
+		const localData = JSON.parse(localRaw) as {
+			cedula?: string;
+			codigoCarnet?: string;
+			email?: string;
+		};
+
+		const fallback = String(
+			localData?.cedula ||
+				localData?.codigoCarnet ||
+				localData?.email ||
+				"",
+		).trim();
+
+		return fallback;
+	} catch {
+		return "";
 	}
-	return [];
-};
-
-const parseNumber = (value: unknown): number | null => {
-	if (typeof value === "number" && Number.isFinite(value)) {
-		return value;
-	}
-	if (typeof value === "string" && value.trim() !== "") {
-		const parsed = Number(value);
-		return Number.isFinite(parsed) ? parsed : null;
-	}
-	return null;
-};
-
-const mapMeal = (menu: MenuApiItem, lunch: LunchApiItem | null | undefined): LunchMeal => {
-	const title = lunch?.nombrePlatoPrincipal || lunch?.name || DEFAULT_MEAL.title;
-	const description = lunch?.descripcion || lunch?.description || DEFAULT_MEAL.description;
-	const ingredients = normalizeIngredients(lunch?.ingredientes ?? lunch?.ingredients);
-	const imageUrl = String(lunch?.image_url || lunch?.image || "");
-	const price = parseNumber(lunch?.precio ?? lunch?.price);
-	const stockActual = parseNumber(menu.stockActual ?? menu.stock_actual) ?? 0;
-	const menuId = parseNumber(menu.id ?? menu.ID);
-	const lunchId = parseNumber(menu.lunchId ?? menu.lunch_id);
-	const category = menu.categoria || menu.category || "";
-
-	return {
-		menuId,
-		lunchId,
-		title,
-		description,
-		ingredients,
-		imageUrl,
-		price,
-		category,
-		stockActual,
-	};
-};
-
-const getUserCookieData = async (): Promise<UserCookieData> => {
-	const response = await fetch("/api/auth/validate-cookie", {
-		method: "GET",
-		credentials: "include",
-		headers: {
-			"Content-Type": "application/json",
-		},
-	});
-
-	if (!response.ok) {
-		return {};
-	}
-
-	const payload = await response.json();
-	return payload?.data ?? {};
 };
 
 export default function LunchMealClient({ mealId }: LunchMealClientProps) {
@@ -141,52 +83,17 @@ export default function LunchMealClient({ mealId }: LunchMealClientProps) {
 				setLoading(true);
 				setError("");
 
-				const menuResponse = await fetch(`/api/menus/${mealId}`, {
-					method: "GET",
-					credentials: "include",
-					signal: controller.signal,
-				});
-
-				if (menuResponse.status === 401) {
-					if (isActive) {
-						setError("Sesion expirada. Inicia sesion nuevamente.");
-					}
-					return;
-				}
-
-				if (!menuResponse.ok) {
-					throw new Error("Menu request failed");
-				}
-
-				const menuPayload = await menuResponse.json();
-				const menuItem = menuPayload?.data ?? null;
-				const lunchId = parseNumber(menuItem?.lunchId ?? menuItem?.lunch_id);
-				if (!lunchId) {
-					throw new Error("Lunch ID missing");
-				}
-
-				const lunchResponse = await fetch(`/api/lunches/${lunchId}`, {
-					method: "GET",
-					credentials: "include",
-					signal: controller.signal,
-				});
-
-				if (!lunchResponse.ok) {
-					throw new Error("Lunch request failed");
-				}
-
-				const lunchPayload = await lunchResponse.json();
-				const lunchItem = lunchPayload?.data ?? null;
+				const lunchItem = await getLunchById(mealId, controller.signal);
 
 				if (isActive) {
-					setMeal(mapMeal(menuItem, lunchItem));
+					setMeal(mapLunchToView(lunchItem));
 				}
 			} catch (err) {
 				if (err instanceof Error && err.name === "AbortError") {
 					return;
 				}
 				if (isActive) {
-					setError("No se pudo cargar el plato.");
+					setError(err instanceof Error ? err.message : "No se pudo cargar el plato.");
 					setMeal(DEFAULT_MEAL);
 				}
 			} finally {
@@ -220,11 +127,11 @@ export default function LunchMealClient({ mealId }: LunchMealClientProps) {
 		return [meal.ingredients.slice(0, mid), meal.ingredients.slice(mid)];
 	}, [meal.ingredients]);
 
-	const canReserve = meal.menuId !== null && meal.stockActual > 0 && !loading && !error;
+	const canReserve = meal.id !== null && meal.stockActual > 0 && !loading && !error;
 
 	const handleReserve = async () => {
-		if (meal.menuId === null) {
-			setError("Menu ID invalido.");
+		if (meal.id === null) {
+			setError("ID de plato invalido.");
 			return;
 		}
 
@@ -233,42 +140,25 @@ export default function LunchMealClient({ mealId }: LunchMealClientProps) {
 			return;
 		}
 
-		const lugarEntrega = window.localStorage.getItem("lugarEntrega")?.trim() || "Comedor";
-
 		try {
 			setReserveLoading(true);
 			setError("");
 
-			const userInfo = await getUserCookieData();
+			const userInfo = await validateCookie();
+			const codigoCarnet = resolveCodigoCarnet(userInfo.cedula);
 
-			const response = await fetch("/api/tickets", {
-				method: "POST",
-				credentials: "include",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({
-					menuId: meal.menuId,
-					prioridad: "LOW",
-					lugarEntrega,
-				}),
+			if (!codigoCarnet) {
+				setError("No se encontro codigo de carnet para reservar.");
+				return;
+			}
+
+			const ticketData = await createTicket({
+				lunchId: meal.id,
+				codigoCarnet,
 			});
-			console.log("Reserva response", response);
 
-			if (response.status === 401) {
-				setError("Sesion expirada. Inicia sesion nuevamente.");
-				return;
-			}
-
-			const payload = await response.json();
-
-			if (!response.ok || !payload?.success) {
-				setError(payload?.error || "No se pudo generar el ticket.");
-				return;
-			}
-
-			const ticket = payload?.data?.ticket;
-			const qrCodePayload = payload?.data?.qrCodePayload;
+			const ticket = ticketData.ticket;
+			const qrCodePayload = ticketData.qrCodePayload;
 
 			if (ticket?.id && qrCodePayload) {
 				sessionStorage.setItem("ticketData", JSON.stringify(ticket));
@@ -280,9 +170,9 @@ export default function LunchMealClient({ mealId }: LunchMealClientProps) {
 							name: meal.title,
 							description: meal.description,
 							ingredients: meal.ingredients,
+							image: meal.imageUrl,
 							image_url: meal.imageUrl,
 							price: meal.price,
-							category: meal.category,
 						},
 						user: userInfo,
 					}),
@@ -292,8 +182,8 @@ export default function LunchMealClient({ mealId }: LunchMealClientProps) {
 			}
 
 			setError("Ticket generado sin informacion completa de QR.");
-		} catch {
-			setError("No se pudo generar el ticket.");
+		} catch (err) {
+			setError(err instanceof Error ? err.message : "No se pudo generar el ticket.");
 		} finally {
 			setReserveLoading(false);
 		}
