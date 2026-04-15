@@ -81,9 +81,22 @@ export default function LunchMealClient({ lunchId }: LunchMealClientProps) {
 		}
 	};
 
+	const resolvedImage = meal.imageUrl
+		? meal.imageUrl.startsWith("data:") || meal.imageUrl.startsWith("http")
+			? meal.imageUrl
+			: `http://localhost:3001/images/${meal.imageUrl}`
+		: "";
+
 	return (
 		<div className="flex flex-col w-full flex-1 justify-center items-center bg-neutral-0 text-neutral-900 p-5 rounded-t-3xl gap-4">
 			<div className="flex flex-col justify-center items-center py-4 gap-4">
+				{resolvedImage && (
+					<img
+						src={resolvedImage}
+						alt={`Imagen de ${meal.title}`}
+						className="w-40 h-40 md:w-52 md:h-52 rounded-full object-cover border-4 border-neutral-200"
+					/>
+				)}
 				<h2 className="text-h4 md:text-h3 text-center lg:text-start font-bold">{meal.title}</h2>
 
 				{loading ? (

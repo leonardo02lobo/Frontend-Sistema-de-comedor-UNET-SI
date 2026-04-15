@@ -105,105 +105,94 @@ import "../style.css";
 <script lang="js">
   document.addEventListener("astro:page-load", () => {
     const quantityInput = document.getElementById("quantity");
-
     const uploadBtn = document.getElementById("upload-btn");
     const imageInput = document.getElementById("image");
     const preview = document.getElementById("preview");
-
     const form = document.getElementById("meal-form");
+    const submitBtn = form.querySelector("button[type='submit']");
 
     const sanitizeQuantityValue = (value) => {
       const parsed = Number(value);
       if (!Number.isFinite(parsed)) return 1;
       const rounded = Math.floor(parsed);
-      if (rounded < 1) return 1;
-      return rounded;
+      return rounded < 1 ? 1 : rounded;
     };
 
     quantityInput.addEventListener("input", () => {
-      const safeValue = sanitizeQuantityValue(quantityInput.value);
-      quantityInput.value = String(safeValue);
+      quantityInput.value = String(sanitizeQuantityValue(quantityInput.value));
     });
-
     quantityInput.addEventListener("blur", () => {
-      const safeValue = sanitizeQuantityValue(quantityInput.value);
-      quantityInput.value = String(safeValue);
+      quantityInput.value = String(sanitizeQuantityValue(quantityInput.value));
     });
 
-    // abrir selector imagen
-    uploadBtn.addEventListener("click", () => {
-      imageInput.click();
-    });
+    uploadBtn.addEventListener("click", () => imageInput.click());
 
-    // preview imagen
     imageInput.addEventListener("change", () => {
       const file = imageInput.files[0];
       if (!file) return;
-
       preview.src = URL.createObjectURL(file);
       preview.classList.remove("hidden");
     });
 
-    // submit
+    const toBase64 = (file) => new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      const name = document.getElementById("name").value.trim();
-      const description = document.getElementById("description").value.trim();
-      const ingredients = document.getElementById("ingredients").value.trim();
+      const nombrePlatoPrincipal = document.getElementById("name").value.trim();
+      const descripcion = document.getElementById("description").value.trim();
+      const ingredientesRaw = document.getElementById("ingredients").value.trim();
       const priceValue = document.getElementById("price").value.trim();
-      const price = Number(priceValue);
-      const quantity = sanitizeQuantityValue(quantityInput.value);
+      const precio = Number(priceValue);
+      const stockInicial = sanitizeQuantityValue(quantityInput.value);
 
-      if (!name || !description || !ingredients || !priceValue || Number.isNaN(price)) {
+      if (!nombrePlatoPrincipal || !descripcion || !ingredientesRaw || !priceValue || Number.isNaN(precio)) {
         alert("Completa todos los campos");
         return;
       }
 
-      let imageUrl = "";
+      const ingredientes = ingredientesRaw.split(",").map(s => s.trim()).filter(Boolean);
+
+      const body = {
+        nombrePlatoPrincipal,
+        descripcion,
+        ingredientes,
+        stockInicial,
+        precio,
+        status: "ACTIVE",
+      };
+
       const file = imageInput.files[0];
+      if (file) {
+        body.image = await toBase64(file);
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Guardando...";
 
       try {
-        if (file) {
-          const formData = new FormData();
-          formData.append("file", file);
-
-          const uploadResponse = await fetch("/api/upload", {
-            method: "POST",
-            body: formData,
-          });
-
-          const uploadPayload = await uploadResponse.json();
-          if (!uploadResponse.ok || !uploadPayload?.success) {
-            throw new Error(uploadPayload?.error || "No se pudo subir la imagen.");
-          }
-
-          imageUrl = uploadPayload.url || "";
-        }
-
-        const response = await fetch("/api/lunches", {
+        const response = await fetch("http://localhost:3001/api/lunches", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name,
-            description,
-            ingredients,
-            quantity,
-            price,
-            image_url: imageUrl,
-          }),
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
         });
 
         const payload = await response.json();
         if (!response.ok || !payload?.success) {
-          throw new Error(payload?.error || "No se pudo guardar el platillo.");
+          throw new Error(payload?.error || payload?.message || "No se pudo guardar el platillo.");
         }
 
         window.location.href = "/dashboard";
       } catch (error) {
         alert(error instanceof Error ? error.message : "No se pudo guardar el platillo.");
+        submitBtn.disabled = false;
+        submitBtn.textContent = "+ Agregar";
       }
     });
   });
