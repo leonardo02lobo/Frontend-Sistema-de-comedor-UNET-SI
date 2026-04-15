@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { URL_BASE, URL_BASE_IMAGES, type ApiResponse, type Lunch, type Ticket } from "../../../models/type";
 
 const FALLBACK_IMAGE =
     "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=120&q=80";
@@ -23,10 +24,21 @@ type LunchApiItem = {
     updated_at?: string | null;
 };
 
+type TicketApiItem = Ticket & {
+    ID?: number | string | null;
+    codigo_carnet?: string | null;
+    fecha_entrega?: string | null;
+    fecha_solicitud?: string | null;
+    lunch_id?: number | string | null;
+    lunch?: LunchApiItem | null;
+    status?: string | null;
+};
+
 type LunchHistoryItem = {
     id: number;
     name: string;
     image: string;
+    userCode: string;
     date: Date;
     dateKey: string;
     timeLabel: string;
@@ -50,6 +62,15 @@ const normalizeText = (value: string) =>
 const parseId = (value: unknown) => {
     const numberValue = Number(value);
     return Number.isFinite(numberValue) ? numberValue : 0;
+};
+
+const resolveImageUrl = (value: unknown) => {
+    const image = String(value || "").trim();
+    if (!image) return FALLBACK_IMAGE;
+    if (image.startsWith("data:") || image.startsWith("http://") || image.startsWith("https://")) {
+        return image;
+    }
+    return `${URL_BASE_IMAGES}${image}`;
 };
 
 const toDateKey = (date: Date) => `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
@@ -107,23 +128,55 @@ const matchesDateFilter = (date: Date, filterId: FilterId) => {
     }
 };
 
-const mapLunches = (lunches: LunchApiItem[]): LunchHistoryItem[] =>
-    lunches
-        .map((lunch) => {
-            const id = parseId(lunch.id ?? lunch.ID);
-            const name = lunch.name || lunch.nombrePlatoPrincipal || "";
-            const image = lunch.image_url || lunch.image || FALLBACK_IMAGE;
-            const rawDate = lunch.created_at || lunch.updated_at || "";
-            const date = new Date(rawDate);
+const parseApiArrayResponse = <T,>(payload: ApiResponse<T[]> | null | undefined, fallbackMessage: string) => {
+    if (!payload?.success) {
+        throw new Error(payload?.error || payload?.message || fallbackMessage);
+    }
+    return Array.isArray(payload.data) ? payload.data : [];
+};
 
-            if (!id || !name || Number.isNaN(date.getTime())) {
+const mapTicketsToHistory = (tickets: TicketApiItem[], lunches: LunchApiItem[]): LunchHistoryItem[] => {
+    const lunchById = new Map(
+        lunches.map((lunch) => [parseId(lunch.id ?? lunch.ID), lunch]).filter(([id]) => id > 0),
+    );
+
+    const deliveredTickets = tickets.filter((ticket) => {
+        const status = String(ticket.estado || ticket.status || "").toUpperCase();
+        return status === "DELIVERED";
+    });
+    const approvedTickets = tickets.filter((ticket) => {
+        const status = String(ticket.estado || ticket.status || "").toUpperCase();
+        return status === "APPROVED";
+    });
+
+    const sourceTickets =
+        deliveredTickets.length > 0 ? deliveredTickets : approvedTickets.length > 0 ? approvedTickets : tickets;
+
+    return sourceTickets
+        .map((ticket) => {
+            const ticketId = parseId(ticket.id ?? ticket.ID);
+            const lunchId = parseId(ticket.lunchId ?? ticket.lunch_id);
+            const lunch = ticket.lunch || lunchById.get(lunchId) || null;
+            const name = lunch?.nombrePlatoPrincipal || lunch?.name || `Platillo #${ticketId || lunchId}`;
+            const rawDate =
+                ticket.fechaEntrega ||
+                ticket.fecha_entrega ||
+                ticket.updatedAt ||
+                ticket.createdAt ||
+                ticket.fechaSolicitud ||
+                ticket.fecha_solicitud ||
+                null;
+            const date = new Date(String(rawDate || ""));
+
+            if (!ticketId || Number.isNaN(date.getTime())) {
                 return null;
             }
 
             return {
-                id,
+                id: ticketId,
                 name,
-                image,
+                image: resolveImageUrl(lunch?.image_url || lunch?.image),
+                userCode: String(ticket.codigoCarnet || ticket.codigo_carnet || "").trim(),
                 date,
                 dateKey: toDateKey(date),
                 timeLabel: new Intl.DateTimeFormat("es-VE", {
@@ -134,6 +187,7 @@ const mapLunches = (lunches: LunchApiItem[]): LunchHistoryItem[] =>
         })
         .filter((item): item is LunchHistoryItem => Boolean(item))
         .sort((a, b) => b.date.getTime() - a.date.getTime());
+};
 
 const groupEntries = (items: LunchHistoryItem[]): HistoryGroup[] => {
     const groupsByDate = new Map<string, LunchHistoryItem[]>();
@@ -216,23 +270,31 @@ export default function HistoryMealView() {
                 setLoading(true);
                 setError("");
 
-                const response = await fetch("/api/lunches", {
+                const ticketsResponse = await fetch(`${URL_BASE}/tickets`, {
+                    method: "GET",
+                    credentials: "include",
+                    signal: controller.signal,
+                });
+                const lunchesResponse = await fetch(`${URL_BASE}/lunches`, {
                     method: "GET",
                     credentials: "include",
                     signal: controller.signal,
                 });
 
-                if (response.status === 401) {
+                if (ticketsResponse.status === 401 || lunchesResponse.status === 401) {
                     throw new Error("Sesion expirada. Inicia sesion nuevamente.");
                 }
 
-                if (!response.ok) {
+                if (!ticketsResponse.ok || !lunchesResponse.ok) {
                     throw new Error("No se pudo cargar el historial.");
                 }
 
-                const payload = await response.json();
-                const lunches = Array.isArray(payload?.data) ? payload.data : [];
-                setItems(mapLunches(lunches));
+                const ticketsPayload = (await ticketsResponse.json()) as ApiResponse<TicketApiItem[]>;
+                const lunchesPayload = (await lunchesResponse.json()) as ApiResponse<LunchApiItem[]>;
+                const tickets = parseApiArrayResponse(ticketsPayload, "No se pudieron cargar los tickets.");
+                const lunches = parseApiArrayResponse(lunchesPayload, "No se pudieron cargar los platos.");
+
+                setItems(mapTicketsToHistory(tickets, lunches));
             } catch (err) {
                 if (err instanceof Error && err.name === "AbortError") return;
                 setItems([]);
@@ -251,7 +313,10 @@ export default function HistoryMealView() {
         const normalizedQuery = normalizeText(query);
 
         return items.filter((item) => {
-            const searchMatch = normalizedQuery === "" || normalizeText(item.name).includes(normalizedQuery);
+            const searchMatch =
+                normalizedQuery === "" ||
+                normalizeText(item.name).includes(normalizedQuery) ||
+                normalizeText(item.userCode).includes(normalizedQuery);
             const dateMatch = matchesDateFilter(item.date, activeFilter);
             return searchMatch && dateMatch;
         });

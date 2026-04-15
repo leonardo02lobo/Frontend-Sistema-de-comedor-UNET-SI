@@ -43,6 +43,23 @@ npm run dev
 
 La aplicacion se levanta en `http://localhost:4321`.
 
+## Prueba rapida del historial
+
+Con el backend corriendo en `http://localhost:3001`, puedes generar datos demo para `/history` con:
+
+```sh
+npm run seed:history
+```
+
+Ese comando:
+- inicia sesion con el admin de prueba del backend
+- limpia tickets demo anteriores
+- crea tickets de ejemplo en varias fechas
+
+Credenciales demo esperadas en el backend:
+- email: `admin@comedor.unet`
+- password: `hash_de_prueba`
+
 ## Build y preview
 
 ```sh
