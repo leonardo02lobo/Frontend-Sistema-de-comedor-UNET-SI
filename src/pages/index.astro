@@ -4,8 +4,25 @@ import PageShell from "../components/PageShell.astro";
 import MenuMealView from "../feature/menu/components/MenuMealView.astro";
 ---
 
+<style>
+    body { visibility: hidden; }
+</style>
+
 <Layout>
     <PageShell showContextHeader={false}>
         <MenuMealView />
     </PageShell>
 </Layout>
+
+<script>
+    const response = await fetch("http://localhost:3001/api/auth/validate-cookie", {
+        method: "GET",
+        credentials: "include",
+    });
+
+    if (!response.ok) {
+        window.location.replace("/home");
+    } else {
+        document.body.style.visibility = "visible";
+    }
+</script>

@@ -4,12 +4,12 @@ const userName = document.querySelector<HTMLElement>("[data-user-name]")!;
 const userEmail = document.querySelector<HTMLElement>("[data-user-email]")!;
 const carrier = document.querySelector<HTMLElement>("[data-user-carrera]")!;
 const userImage = document.querySelector<HTMLImageElement>("[data-user-image]")!;
-
 const dashboard = document.querySelector<HTMLElement>("[dashboard-access]")!;
+const logoutButton = document.querySelector<HTMLElement>("#logout-button")!;
 
 const userData = JSON.parse(localStorage.getItem("userData") || "{}");
 
-if(userData) {
+if (userData) {
     userName.textContent = userData.fullName || "-";
     userEmail.textContent = userData.email || "-";
     carrier.textContent = userData.carrera || "-";
@@ -21,3 +21,12 @@ if (userData?.role === "ADMIN") {
 } else {
     dashboard.classList.add("hidden");
 }
+
+logoutButton?.addEventListener("click", async () => {
+    await fetch("http://localhost:3001/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+    });
+    localStorage.removeItem("userData");
+    window.location.replace("/home");
+});
