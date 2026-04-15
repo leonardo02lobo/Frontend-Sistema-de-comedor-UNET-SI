@@ -1,34 +1,7 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import MealCard from "./MealCard.jsx";
-
-type LunchApiItem = {
-	id?: number | string | null;
-	ID?: number | string | null;
-	nombrePlatoPrincipal?: string | null;
-	name?: string | null;
-	categoria?: string | null;
-	category?: string | null;
-	image_url?: string | null;
-	image?: string | null;
-	quantity?: number | string | null;
-	stockActual?: number | string | null;
-	stock_actual?: number | string | null;
-};
-
-type Meal = {
-	id: number | string;
-	name: string;
-	category: string;
-	image: string;
-	stockActual: number;
-};
-
-type MealListProps = {
-	fallbackImage?: string;
-	initialMeals?: Meal[];
-};
-
-const EMPTY_MEALS: Meal[] = [];
+import { type LunchApiItem, type Meal, type MealListProps, EMPTY_MEALS } from "../type.js";
+import { getAllLunches } from "../../lunch/data.js";
 
 const normalizeText = (value: string) =>
 	value
@@ -37,30 +10,6 @@ const normalizeText = (value: string) =>
 		.trim()
 		.toLowerCase();
 
-const parseId = (value: unknown): number | null => {
-	if (typeof value === "number" && Number.isFinite(value)) {
-		return value;
-	}
-
-	if (typeof value === "string" && value.trim() !== "") {
-		const parsed = Number(value);
-		return Number.isFinite(parsed) ? parsed : null;
-	}
-
-	return null;
-};
-
-const parseStock = (value: unknown): number => {
-	if (typeof value === "number" && Number.isFinite(value)) {
-		return value;
-	}
-	if (typeof value === "string" && value.trim() !== "") {
-		const parsed = Number(value);
-		return Number.isFinite(parsed) ? parsed : 0;
-	}
-	return 0;
-};
-
 const mapMeals = (lunches: LunchApiItem[], fallbackImage: string): Meal[] =>
 	lunches
 		.map((lunch) => {
@@ -68,19 +17,16 @@ const mapMeals = (lunches: LunchApiItem[], fallbackImage: string): Meal[] =>
 			const name = lunch.nombrePlatoPrincipal || lunch.name || "";
 			const image = lunch.image_url || lunch.image || fallbackImage || "";
 			const category = lunch.categoria || lunch.category || "";
-			const stockActual = parseStock(
-				lunch.stockActual ?? lunch.stock_actual ?? lunch.quantity ?? 0,
-			);
 
 			return {
 				id: lunchId ?? "",
 				name,
 				category,
 				image,
-				stockActual,
+				stockActual: lunch.stockActual ?? lunch.stock_actual ?? lunch.quantity,
 			};
 		})
-		.filter((item) => item.id !== "" && item.name && item.stockActual > 0);
+		.filter((item) => item.id !== "" && item.name);
 
 export default function MealList({ fallbackImage = "", initialMeals }: MealListProps) {
 	const stableInitialMeals = initialMeals ?? EMPTY_MEALS;
@@ -109,25 +55,7 @@ export default function MealList({ fallbackImage = "", initialMeals }: MealListP
 				setLoading(true);
 				setError("");
 
-				const lunchesResponse = await fetch("/api/lunches", {
-					method: "GET",
-					credentials: "include",
-					signal: controller.signal,
-				});
-
-				if (lunchesResponse.status === 401) {
-					setMeals([]);
-					setError("Sesion expirada. Inicia sesion nuevamente.");
-					return;
-				}
-
-				if (!lunchesResponse.ok) {
-					throw new Error("Request failed");
-				}
-
-				const lunchesPayload = await lunchesResponse.json();
-				const lunchItems = Array.isArray(lunchesPayload?.data) ? lunchesPayload.data : [];
-
+				const lunchItems = await getAllLunches();	
 				setMeals(mapMeals(lunchItems, fallbackImage));
 			} catch (err) {
 				if (err instanceof Error && err.name === "AbortError") {
@@ -161,7 +89,6 @@ export default function MealList({ fallbackImage = "", initialMeals }: MealListP
 	}, [meals, query]);
 
 	const showEmpty = !loading && !error && filteredMeals.length === 0;
-	console.log("Meals to display", { meals, filteredMeals, query });
 	return (
 		<div className="flex flex-col gap-3 pb-4">
 			<label className="relative block">

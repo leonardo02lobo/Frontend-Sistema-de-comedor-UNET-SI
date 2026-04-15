@@ -1,39 +1,10 @@
 ---
-import { ClientRouter } from "astro:transitions";
-import { getData, type SessionEntry } from "../lib/db";
 import "../styles/global.css";
 
 interface Props {
 	title?: string;
-	disableAuthGuard?: boolean;
 }
-
-const {
-	title = "Sistema de gestion de comedor universitario UNET",
-	disableAuthGuard = false,
-} = Astro.props as Props;
-
-const protectedPaths = new Set([
-	"/dashboard",
-	"/meals-list",
-	"/add-meal",
-	"/edit-meal",
-	"/escanear",
-	"/verificacion",
-	"/history",
-]);
-
-const currentPath = Astro.url.pathname;
-const shouldCheckAuth = !disableAuthGuard && protectedPaths.has(currentPath);
-
-if (shouldCheckAuth) {
-	const sessionId = Astro.cookies.get("session_id")?.value;
-	const sessions = await getData<SessionEntry[]>("sessions.json", []);
-	const isValid = !!sessionId && sessions.some((entry) => entry.id === sessionId);
-	if (!isValid) {
-		return Astro.redirect("/home");
-	}
-}
+const { title = "Sistema de gestion de comedor universitario UNET" } = Astro.props as Props;
 ---
 
 <html lang="es">
@@ -43,9 +14,7 @@ if (shouldCheckAuth) {
 		<link rel="icon" href="/favicon.ico" />
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />
-		<ClientRouter />
 		<title>{title}</title>
-		{!disableAuthGuard && <script type="module" src="/src/script/validation.ts"></script>}
 		<script lang="js">
 			document.addEventListener("astro:page-load", () => {
 				function normalizePath(pathname) {

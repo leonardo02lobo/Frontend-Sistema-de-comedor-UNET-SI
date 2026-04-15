@@ -7,8 +7,10 @@ interface Props {
     icon?: string;
     showContextHeader?: boolean;
     navActive?: "home" | "history" | "profile";
+    lunchId?: string;
 }
-const { text = "", icon = "", showContextHeader = true, navActive = "home" } = Astro.props as Props;
+const { text = "", icon = "", showContextHeader = true, navActive = "home", lunchId = "" } = Astro.props as Props;
+
 ---
 
 <main class="min-h-dvh flex flex-col lg:flex-row w-full">

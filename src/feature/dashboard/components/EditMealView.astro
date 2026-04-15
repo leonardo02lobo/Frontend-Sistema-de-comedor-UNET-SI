@@ -66,12 +66,18 @@ import "../style.css";
     <div class="flex flex-col gap-1">
       <label class="font-semibold">Cantidad Disponible</label>
       <div
-        class="flex items-center justify-between rounded-xl border px-4 py-2 bg-neutral-0"
+        class="flex items-center gap-2 rounded-xl border px-4 py-2 bg-neutral-0"
         style="border-color: var(--color-neutral-200);"
       >
-        <button type="button" id="minus">-</button>
-        <span id="quantity">1</span>
-        <button type="button" id="plus">+</button>
+        <button type="button" id="minus" class="px-2 text-lg font-bold select-none">-</button>
+        <input
+          id="quantity"
+          type="number"
+          min="1"
+          class="flex-1 text-center bg-transparent outline-none"
+          value="1"
+        />
+        <button type="button" id="plus" class="px-2 text-lg font-bold select-none">+</button>
       </div>
     </div>
 
@@ -117,7 +123,6 @@ import "../style.css";
 
 <script lang="js">
   document.addEventListener("astro:page-load", () => {
-    let quantity = 1;
     let currentImageUrl = "";
     let lunchId = null;
 
@@ -140,24 +145,27 @@ import "../style.css";
     async function loadLunch() {
       if (!lunchId) return;
       try {
-        const response = await fetch(`/api/lunches/${lunchId}`);
+        const response = await fetch(`http://localhost:3001/api/lunches/${lunchId}`, {
+          credentials: "include",
+        });
         const payload = await response.json();
         if (!response.ok || !payload?.success) {
           throw new Error(payload?.error || "No se pudo cargar el platillo.");
         }
 
         const lunch = payload.data || {};
-        nameInput.value = lunch.name || "";
-        descriptionInput.value = lunch.description || "";
-        ingredientsInput.value = Array.isArray(lunch.ingredients)
-          ? lunch.ingredients.join(", ")
-          : String(lunch.ingredients || "");
-        quantity = Number(lunch.quantity || 1);
-        quantityEl.textContent = quantity;
-        priceInput.value = String(lunch.price ?? "");
-        currentImageUrl = String(lunch.image_url || "");
+        nameInput.value = lunch.nombrePlatoPrincipal || "";
+        descriptionInput.value = lunch.descripcion || "";
+        ingredientsInput.value = Array.isArray(lunch.ingredientes)
+          ? lunch.ingredientes.join(", ")
+          : String(lunch.ingredientes || "");
+        quantityEl.value = Number(lunch.stockActual || 1);
+        priceInput.value = String(lunch.precio ?? "");
+        currentImageUrl = lunch.image || "";
         if (currentImageUrl) {
-          preview.src = currentImageUrl;
+          preview.src = currentImageUrl.startsWith("data:") || currentImageUrl.startsWith("http")
+            ? currentImageUrl
+            : `http://localhost:3001/images/${currentImageUrl}`;
           preview.classList.remove("hidden");
         }
       } catch (error) {
@@ -166,13 +174,11 @@ import "../style.css";
     }
 
     document.getElementById("plus")?.addEventListener("click", () => {
-      quantity++;
-      quantityEl.textContent = quantity;
+      quantityEl.value = Math.max(1, Number(quantityEl.value || 1) + 1);
     });
 
     document.getElementById("minus")?.addEventListener("click", () => {
-      if (quantity > 1) quantity--;
-      quantityEl.textContent = quantity;
+      quantityEl.value = Math.max(1, Number(quantityEl.value || 1) - 1);
     });
 
     uploadBtn.addEventListener("click", () => {
@@ -207,44 +213,47 @@ import "../style.css";
       let imageUrl = currentImageUrl;
       const file = imageInput.files[0];
 
+      const toBase64 = (f) => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(f);
+      });
+
+      const submitBtn = form.querySelector("button[type='submit']");
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Guardando...";
+
       try {
+        const body = {
+          nombrePlatoPrincipal: name,
+          descripcion: description,
+          ingredientes: ingredients.split(",").map(s => s.trim()).filter(Boolean),
+          stockActual: Math.max(1, Number(quantityEl.value || 1)),
+          precio: price,
+        };
+
         if (file) {
-          const formData = new FormData();
-          formData.append("file", file);
-          const uploadResponse = await fetch("/api/upload", {
-            method: "POST",
-            body: formData,
-          });
-          const uploadPayload = await uploadResponse.json();
-          if (!uploadResponse.ok || !uploadPayload?.success) {
-            throw new Error(uploadPayload?.error || "No se pudo subir la imagen.");
-          }
-          imageUrl = uploadPayload.url || "";
+          body.image = await toBase64(file);
         }
 
-        const response = await fetch(`/api/lunches/${lunchId}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name,
-            description,
-            ingredients,
-            quantity,
-            price,
-            image_url: imageUrl,
-          }),
+        const response = await fetch(`http://localhost:3001/api/lunches/${lunchId}`, {
+          method: "PATCH",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
         });
 
         const payload = await response.json();
         if (!response.ok || !payload?.success) {
-          throw new Error(payload?.error || "No se pudo actualizar el platillo.");
+          throw new Error(payload?.error || payload?.message || "No se pudo actualizar el platillo.");
         }
 
         window.location.href = "/dashboard";
       } catch (error) {
         alert(error instanceof Error ? error.message : "No se pudo actualizar el platillo.");
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Guardar Cambios";
       }
     });
 
