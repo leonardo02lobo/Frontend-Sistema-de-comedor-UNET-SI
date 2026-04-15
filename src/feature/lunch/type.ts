@@ -1,18 +1,30 @@
-import { URL_BASE, type ApiResponse, type Lunch, type NavKey } from "../../models/type";
+import type {
+  Lunch,
+  NavKey,
+  TicketCreateRequest,
+  TicketQRCodeData,
+  UserCookieData,
+} from "../../models/type";
 
-
+export type { Lunch, TicketCreateRequest, TicketQRCodeData, UserCookieData };
 
 export interface NavItem {
   key: NavKey;
   label: string;
 }
 
+export interface LunchMealClientProps {
+  lunchId: string;
+}
+
 export interface LunchMeal {
+  id: number | null;
   title: string;
   description: string;
-  ingredientsLeft: string[];
-  ingredientsRight: string[];
-  price: number;
+  ingredients: string[];
+  imageUrl: string;
+  price: number | null;
+  stockActual: number;
 }
 
 export interface LunchTicket {
@@ -23,22 +35,25 @@ export interface LunchTicket {
   barcodeDigits: string;
 }
 
-export async function getAllLunches(): Promise<Lunch[]> {
-  const lunchesResponse = await fetch(`${URL_BASE}/lunches`, {
-    method: "GET",
-    credentials: "include",
-  });
+export interface LocalUserData {
+  cedula?: string;
+  codigoCarnet?: string;
+  email?: string;
+}
 
-  if (lunchesResponse.status === 401) {
-    throw new Error("Sesion expirada. Inicia sesion nuevamente.");
-  }
+export interface TicketReservationContext {
+  lunch: {
+    name: string;
+    description: string;
+    ingredients: string[];
+    image: string;
+    image_url: string;
+    price: number | null;
+  };
+  user: UserCookieData;
+}
 
-  if (!lunchesResponse.ok) {
-    throw new Error("No se pudo cargar el menu.");
-  }
-
-  const lunchesPayload = (await lunchesResponse.json()) as ApiResponse<Lunch[]>;
-  const lunchItems = Array.isArray(lunchesPayload?.data) ? lunchesPayload.data : [];
-  return lunchItems;
+export interface ReserveTicketResult {
+  ticketId: number;
 }
 

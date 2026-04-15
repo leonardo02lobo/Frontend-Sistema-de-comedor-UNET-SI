@@ -1,5 +1,4 @@
 ---
-import { ClientRouter } from "astro:transitions";
 import "../styles/global.css";
 
 interface Props {
@@ -15,7 +14,6 @@ const { title = "Sistema de gestion de comedor universitario UNET" } = Astro.pro
 		<link rel="icon" href="/favicon.ico" />
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />
-		<ClientRouter />
 		<title>{title}</title>
 		<script lang="js">
 			document.addEventListener("astro:page-load", () => {

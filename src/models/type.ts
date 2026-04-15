@@ -1,4 +1,4 @@
-export type UserRole = 'ADMIN' | 'USER';
+export type UserRole = 'ADMIN' | 'USER' | 'MANAGER' | 'CHEF' | 'DISTRIBUTOR';
 export type LunchStatus = 'ACTIVE' | 'INACTIVE';
 export type TicketStatus = 'PENDING' | 'APPROVED' | 'CANCELLED';
 const URL = 'http://localhost:3001';
@@ -7,12 +7,17 @@ export const URL_BASE_IMAGES = `${URL}/images/`;
 export type NavKey = "home" | "history" | "profile";
 
 export interface Admin {
+  id?: number;
+  username?: string;
   email: string;
   role: UserRole;
   fullName: string;
   cedula: string;
   carrera: string;
   imageURL?: string;
+  isActive?: boolean;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
 }
 
 export interface Lunch {
@@ -37,11 +42,15 @@ export interface Ticket {
   estado: TicketStatus;
   lunchId: number;
   validadoPorId?: number;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
   lunch?: Lunch;
   validadoPor?: Admin;
 }
 
 export interface UserCookieData {
+  id?: number;
+  username?: string;
   email?: string;
   role?: UserRole;
   fullName?: string;
@@ -49,6 +58,11 @@ export interface UserCookieData {
   carrera?: string;
   career?: string;
   cedula?: string;
+  imageURL?: string;
+  isActive?: boolean;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
+  user?: Admin;
 }
 
 export interface TicketCreateRequest {

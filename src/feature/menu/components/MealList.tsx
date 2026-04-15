@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import MealCard from "./MealCard.jsx";
 import { type LunchApiItem, type Meal, type MealListProps, EMPTY_MEALS } from "../type.js";
-import { getAllLunches } from "../../lunch/type.js";
+import { getAllLunches } from "../../lunch/data.js";
 
 const normalizeText = (value: string) =>
 	value

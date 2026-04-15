@@ -2,16 +2,12 @@
 import Layout from "../../layout/Layout.astro";
 import LunchMealView from "../../feature/lunch/components/LunchMealView.astro";
 import PageShell from "../../components/PageShell.astro";
-import { getAllLunches } from "../../feature/lunch/type";
-
-type LunchItem = {
-  id?: number | string | null;
-};
+import { fetchLunchMeal, getAllLunches } from "../../feature/lunch/data.js";
 
 export async function getStaticPaths() {
   const lunches = await getAllLunches();
 
-  return (lunches as LunchItem[])
+  return lunches
     .filter((lunch) => lunch?.id !== null && lunch?.id !== undefined && String(lunch.id) !== "")
     .map((lunch) => ({
       params: {
@@ -20,11 +16,12 @@ export async function getStaticPaths() {
     }));
 }
 
-const menuId = Astro.params.lunch ?? "";
+const lunchId = Astro.params.lunch ?? "";
+const lunchItem = await fetchLunchMeal(lunchId);
 ---
 
 <Layout>
-  <PageShell>
-    <LunchMealView mealId={menuId} />
+  <PageShell icon={lunchItem.imageUrl}>
+    <LunchMealView lunchId={lunchId} />
   </PageShell>
 </Layout>
