@@ -36,7 +36,7 @@ const isInlineRoute =
 </div>
 
 <script>
-    const normalizePath = (pathname) => {
+    const normalizePath = (pathname: string) => {
         const safePath = String(pathname || "");
         if (safePath.length > 1 && safePath.endsWith("/")) {
             return safePath.slice(0, -1);
@@ -44,7 +44,7 @@ const isInlineRoute =
         return safePath || "/";
     };
 
-    const restoreStoredContext = (storageKey) => {
+    const restoreStoredContext = (storageKey: string) => {
         const rawValue = sessionStorage.getItem(storageKey);
         if (!rawValue) return false;
 
@@ -80,32 +80,32 @@ const isInlineRoute =
         }
     };
 
-    document.querySelectorAll("[data-back-button]").forEach((button) => {
-        if (!(button instanceof HTMLButtonElement)) return;
-        if (button.dataset.bound === "true") return;
+    function bindBackButtons() {
+        document.querySelectorAll("[data-back-button]").forEach((button) => {
+            if (!(button instanceof HTMLButtonElement)) return;
+            if (button.dataset.bound === "true") return;
+            button.dataset.bound = "true";
+            button.addEventListener("click", () => {
+                const currentPath = normalizePath(window.location.pathname);
 
-        button.dataset.bound = "true";
-        button.addEventListener("click", () => {
-            const currentPath = normalizePath(window.location.pathname);
-
-            if (currentPath === "/") {
-                if (restoreStoredContext("menu:return")) {
-                    return;
+                if (currentPath === "/") {
+                    if (restoreStoredContext("menu:return")) return;
                 }
-            }
 
-            if (currentPath === "/history") {
-                if (restoreStoredContext("history:return")) {
-                    return;
+                if (currentPath === "/history") {
+                    if (restoreStoredContext("history:return")) return;
                 }
-            }
 
-            if (window.history.length > 1) {
-                window.history.back();
-                return;
-            }
-
-            window.location.href = "/";
+                if (window.history.length > 1) {
+                    window.history.back();
+                } else {
+                    window.location.href = "/";
+                }
+            });
         });
-    });
+    }
+
+    // Enlazar en carga inicial y en cada navegación con ClientRouter
+    bindBackButtons();
+    document.addEventListener("astro:page-load", bindBackButtons);
 </script>

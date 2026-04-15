@@ -146,8 +146,7 @@ import "../style.css";
         const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=80&q=80";
 
         const state = {
-            menus: [],
-            lunchesById: new Map(),
+            lunches: [],
             tickets: [],
         };
 
@@ -179,26 +178,16 @@ import "../style.css";
         }
 
         function getMealsView() {
-            return state.menus
-                .map((menu) => {
-                    const lunchId = Number(menu.lunchId ?? menu.lunch_id ?? 0);
-                    const lunch = state.lunchesById.get(lunchId) || null;
-                    const stockActual = Number(menu.stockActual ?? menu.stock_actual ?? 0);
-                    const stockInicial = Number(menu.stockInicial ?? menu.stock_inicial ?? 0);
-                    const name = lunch?.nombrePlatoPrincipal || lunch?.name || `Platillo ${menu.id}`;
-                    const image = lunch?.image_url || lunch?.image || FALLBACK_IMAGE;
-                    const price = Number(lunch?.price ?? lunch?.precio ?? 0);
-                    return {
-                        menuId: Number(menu.id ?? menu.ID ?? 0),
-                        lunchId,
-                        name,
-                        image,
-                        price,
-                        stockActual,
-                        stockInicial,
-                    };
-                })
-                .filter((item) => item.menuId > 0 && item.lunchId > 0);
+            return state.lunches
+                .map((lunch) => ({
+                    lunchId: Number(lunch.id ?? 0),
+                    name: lunch.nombrePlatoPrincipal || `Platillo ${lunch.id}`,
+                    image: lunch.image || FALLBACK_IMAGE,
+                    price: Number(lunch.precio ?? 0),
+                    stockActual: Number(lunch.stockActual ?? 0),
+                    stockInicial: Number(lunch.stockInicial ?? 0),
+                }))
+                .filter((item) => item.lunchId > 0);
         }
 
         function renderSummary(meals) {
@@ -233,18 +222,32 @@ import "../style.css";
                 return;
             }
 
-            const values = meals.map((meal) => Math.max(0, Number(meal.stockActual || 0)));
-            const maxValue = Math.max(...values, 1);
+            // Sort descending by stockActual, take top 3, group rest as "Otros"
+            const sorted = [...meals].sort((a, b) =>
+                Math.max(0, Number(b.stockActual || 0)) - Math.max(0, Number(a.stockActual || 0))
+            );
 
-            meals.forEach((meal) => {
+            const top3 = sorted.slice(0, 3);
+            const rest = sorted.slice(3);
+
+            const displayMeals = [...top3];
+            if (rest.length > 0) {
+                const othersTotal = rest.reduce((acc, m) => acc + Math.max(0, Number(m.stockActual || 0)), 0);
+                displayMeals.push({ name: "Otros", stockActual: othersTotal, _isOthers: true });
+            }
+
+            const maxValue = Math.max(...displayMeals.map((m) => Math.max(0, Number(m.stockActual || 0))), 1);
+
+            displayMeals.forEach((meal) => {
                 const value = Math.max(0, Number(meal.stockActual || 0));
                 const barPx = Math.round((value / maxValue) * dashboardChartMaxPx);
+                const barColor = "var(--color-primario)";
 
                 const column = document.createElement("div");
                 column.className = "flex flex-col items-center flex-1 h-full justify-end";
                 column.innerHTML = `
                     <span class="text-xs font-bold mb-1" style="color: var(--color-neutral-900)">${value}</span>
-                    <div class="w-full rounded-t-sm" style="height: ${barPx}px; background: var(--color-primario);"></div>
+                    <div class="w-full rounded-t-sm" style="height: ${barPx}px; background: ${barColor};"></div>
                 `;
                 barsContainer.appendChild(column);
 
@@ -270,55 +273,40 @@ import "../style.css";
             }
 
             list.innerHTML = meals
-                .map((meal) => {
-                    return `
-                        <li
-                            data-platillo-id="${meal.menuId}"
-                            class="flex items-center gap-3 rounded-xl border bg-neutral-0 px-3 py-2.5 md:px-4 md:py-3"
-                            style="border-color: var(--color-neutral-200)"
-                        >
-                            <img src="${meal.image}" alt="${meal.name}" class="h-9 w-9 md:h-10 md:w-10 rounded-full object-cover shrink-0" />
-                            <div class="min-w-0 flex-1">
-                                <span class="truncate block font-semibold text-sm md:text-base" style="color: var(--color-neutral-900)" title="${meal.name}">
-                                    ${meal.name}
-                                </span>
-                                <span class="text-xs md:text-sm" style="color: var(--color-brand-muted)">
-                                    Precio: $${Number(meal.price || 0).toFixed(2)}
-                                </span>
-                                <span class="text-xs md:text-sm" style="color: var(--color-brand-muted)">
-                                    Restantes: ${meal.stockActual} / ${meal.stockInicial}
-                                </span>
-                            </div>
-                            <div class="shrink-0 flex items-center gap-1.5 md:gap-2">
-                                <a
-                                    href="/lunch/${meal.menuId}"
-                                    class="action-btn p-1.5 rounded-lg hover:bg-neutral-200 transition-colors"
-                                    aria-label="Ver ${meal.name}"
-                                    style="color: var(--color-neutral-500)"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
-                                </a>
-                                <a
-                                    href="/edit-meal?id=${meal.lunchId}"
-                                    class="action-btn p-1.5 rounded-lg hover:bg-neutral-200 transition-colors"
-                                    aria-label="Editar ${meal.name}"
-                                    style="color: var(--color-neutral-500)"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                                </a>
-                                <button
-                                    type="button"
-                                    data-delete-id="${meal.lunchId}"
-                                    class="action-btn p-1.5 rounded-lg hover:bg-neutral-200 transition-colors"
-                                    aria-label="Eliminar ${meal.name}"
-                                    style="color: var(--color-error)"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
-                                </button>
-                            </div>
-                        </li>
-                    `;
-                })
+                .map((meal) => `
+                    <li
+                        class="flex items-center gap-3 rounded-xl border bg-neutral-0 px-3 py-2.5 md:px-4 md:py-3"
+                        style="border-color: var(--color-neutral-200)"
+                    >
+                        <img src="${meal.image}" alt="${meal.name}" class="h-9 w-9 md:h-10 md:w-10 rounded-full object-cover shrink-0"
+                            onerror="this.src='${FALLBACK_IMAGE}'" />
+                        <div class="min-w-0 flex-1">
+                            <span class="truncate block font-semibold text-sm md:text-base" style="color: var(--color-neutral-900)" title="${meal.name}">
+                                ${meal.name}
+                            </span>
+                            <span class="text-xs md:text-sm" style="color: var(--color-brand-muted)">
+                                Precio: $${Number(meal.price || 0).toFixed(2)} &nbsp;·&nbsp; Restantes: ${meal.stockActual} / ${meal.stockInicial}
+                            </span>
+                        </div>
+                        <div class="shrink-0 flex items-center gap-1.5 md:gap-2">
+                            <a href="/lunch/${meal.lunchId}"
+                                class="action-btn p-1.5 rounded-lg hover:bg-neutral-200 transition-colors"
+                                aria-label="Ver ${meal.name}" style="color: var(--color-neutral-500)">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </a>
+                            <a href="/edit-meal?id=${meal.lunchId}"
+                                class="action-btn p-1.5 rounded-lg hover:bg-neutral-200 transition-colors"
+                                aria-label="Editar ${meal.name}" style="color: var(--color-neutral-500)">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                            </a>
+                            <button type="button" data-delete-id="${meal.lunchId}"
+                                class="action-btn p-1.5 rounded-lg hover:bg-neutral-200 transition-colors"
+                                aria-label="Eliminar ${meal.name}" style="color: var(--color-error)">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                            </button>
+                        </div>
+                    </li>
+                `)
                 .join("");
         }
 
@@ -332,34 +320,25 @@ import "../style.css";
         async function loadDashboardData() {
             setFeedback("");
             try {
-                const [menusResponse, lunchesResponse, ticketsResponse] = await Promise.all([
-                    fetch("/api/menus", { method: "GET", credentials: "include" }),
-                    fetch("/api/lunches", { method: "GET", credentials: "include" }),
-                    fetch("/api/tickets", { method: "GET", credentials: "include" }),
+                const [lunchesResponse, ticketsResponse] = await Promise.all([
+                    fetch("http://localhost:3001/api/lunches", { method: "GET", credentials: "include" }),
+                    fetch("http://localhost:3001/api/tickets", { method: "GET", credentials: "include" }),
                 ]);
 
-                if (menusResponse.status === 401 || lunchesResponse.status === 401 || ticketsResponse.status === 401) {
+                if (lunchesResponse.status === 401 || ticketsResponse.status === 401) {
                     setFeedback("Sesion expirada. Inicia sesion nuevamente.", true);
                     return;
                 }
 
-                if (!menusResponse.ok || !lunchesResponse.ok || !ticketsResponse.ok) {
+                if (!lunchesResponse.ok || !ticketsResponse.ok) {
                     throw new Error("No se pudo cargar la informacion del dashboard.");
                 }
 
-                const menusPayload = await menusResponse.json();
                 const lunchesPayload = await lunchesResponse.json();
                 const ticketsPayload = await ticketsResponse.json();
 
-                state.menus = Array.isArray(menusPayload?.data) ? menusPayload.data : [];
+                state.lunches = Array.isArray(lunchesPayload?.data) ? lunchesPayload.data : [];
                 state.tickets = Array.isArray(ticketsPayload?.data) ? ticketsPayload.data : [];
-
-                const lunches = Array.isArray(lunchesPayload?.data) ? lunchesPayload.data : [];
-                state.lunchesById = new Map(
-                    lunches
-                        .map((lunch) => [Number(lunch.id ?? lunch.ID ?? 0), lunch])
-                        .filter(([id]) => id > 0)
-                );
 
                 renderDashboard();
             } catch (error) {
@@ -371,7 +350,7 @@ import "../style.css";
         async function confirmDeleteMeal() {
             if (!pendingDeleteId) return;
             try {
-                const response = await fetch(`/api/lunches/${pendingDeleteId}`, {
+                const response = await fetch(`http://localhost:3001/api/lunches/${pendingDeleteId}`, {
                     method: "DELETE",
                     credentials: "include",
                 });
