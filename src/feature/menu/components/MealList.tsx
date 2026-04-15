@@ -55,7 +55,7 @@ export default function MealList({ fallbackImage = "", initialMeals }: MealListP
 				setLoading(true);
 				setError("");
 
-				const lunchItems = await getAllLunches();				
+				const lunchItems = await getAllLunches();	
 				setMeals(mapMeals(lunchItems, fallbackImage));
 			} catch (err) {
 				if (err instanceof Error && err.name === "AbortError") {

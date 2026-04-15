@@ -1,5 +1,7 @@
+import { URL_BASE_IMAGES } from "../../../models/type";
+
 export default function MealCard({ meal }) {
-    const image = meal.image || "";
+    const image = URL_BASE_IMAGES+meal.image || "";
     const category = meal.category ? meal.category.trim() : "";
     const stock = Number.isFinite(Number(meal.stockActual)) ? Number(meal.stockActual) : null;
 

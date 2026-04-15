@@ -1,7 +1,9 @@
 export type UserRole = 'ADMIN' | 'USER';
 export type LunchStatus = 'ACTIVE' | 'INACTIVE';
 export type TicketStatus = 'PENDING' | 'APPROVED' | 'CANCELLED';
-export const URL_BASE = 'http://localhost:3001/api';
+const URL = 'http://localhost:3001';
+export const URL_BASE = `${URL}/api`;
+export const URL_BASE_IMAGES = `${URL}/images/`;
 export type NavKey = "home" | "history" | "profile";
 
 export interface Admin {
