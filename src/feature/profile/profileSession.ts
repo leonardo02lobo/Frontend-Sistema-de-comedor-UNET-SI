@@ -1,3 +1,5 @@
+import { URL_BASE_IMAGES } from "../../models/type";
+
 const userName = document.querySelector<HTMLElement>("[data-user-name]")!;
 const userEmail = document.querySelector<HTMLElement>("[data-user-email]")!;
 const carrier = document.querySelector<HTMLElement>("[data-user-carrera]")!;
@@ -11,7 +13,7 @@ if(userData) {
     userName.textContent = userData.fullName || "-";
     userEmail.textContent = userData.email || "-";
     carrier.textContent = userData.carrera || "-";
-    userImage.src = userData.imageURL || "/";
+    userImage.src = URL_BASE_IMAGES+userData.imageURL || "/";
 }
 
 if (userData?.role === "ADMIN") {

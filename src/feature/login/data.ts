@@ -19,6 +19,8 @@ loginForm?.addEventListener("submit", async (e) => {
 
     if (response.ok) {
         const data = await response.json();
+        console.log(data);
+        
         localStorage.setItem("userData", JSON.stringify({
             carrera: data.data.carrera,
             email: data.data.email,
