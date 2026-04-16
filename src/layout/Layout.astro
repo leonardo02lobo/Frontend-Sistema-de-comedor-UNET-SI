@@ -4,7 +4,8 @@ import "../styles/global.css";
 interface Props {
 	title?: string;
 }
-const { title = "Sistema de gestion de comedor universitario UNET" } = Astro.props as Props;
+const { title = "Sistema de gestion de comedor universitario UNET" } =
+	Astro.props as Props;
 ---
 
 <html lang="es">
@@ -26,7 +27,8 @@ const { title = "Sistema de gestion de comedor universitario UNET" } = Astro.pro
 				}
 
 				function tryRestoreHistoryPosition() {
-					const rawRestore = sessionStorage.getItem("history:restore");
+					const rawRestore =
+						sessionStorage.getItem("history:restore");
 					if (!rawRestore) return;
 
 					let restore = null;
@@ -43,32 +45,68 @@ const { title = "Sistema de gestion de comedor universitario UNET" } = Astro.pro
 						return;
 					}
 
-					const targetUrl = new URL(targetPath, window.location.origin);
-					if (normalizePath(targetUrl.pathname) !== normalizePath(window.location.pathname)) {
+					const targetUrl = new URL(
+						targetPath,
+						window.location.origin,
+					);
+					if (
+						normalizePath(targetUrl.pathname) !==
+						normalizePath(window.location.pathname)
+					) {
 						return;
 					}
 
 					const applyRestore = () => {
 						window.scrollTo(0, Number(restore?.scrollY) || 0);
 
-						const selector = String(restore?.containerSelector || "");
+						const selector = String(
+							restore?.containerSelector || "",
+						);
 						if (selector) {
 							const container = document.querySelector(selector);
 							if (container instanceof HTMLElement) {
-								container.scrollTop = Number(restore?.containerScrollTop) || 0;
+								container.scrollTop =
+									Number(restore?.containerScrollTop) || 0;
 							}
 						}
 
 						sessionStorage.removeItem("history:restore");
 					};
-
-					// Dos frames para esperar render + transicion de Astro.
 					requestAnimationFrame(() => {
 						requestAnimationFrame(applyRestore);
 					});
 				}
 
 				tryRestoreHistoryPosition();
+			});
+		</script>
+		<script>
+			async function checkAuth() {
+				const overlay = document.getElementById("auth-overlay");
+				try {
+					const response = await fetch(
+						"http://localhost:3001/api/auth/validate-cookie",
+						{
+							method: "GET",
+							credentials: "include",
+						},
+					);
+
+					if (!response.ok) {
+						window.location.replace("/home");
+					} else {
+						overlay?.remove();
+					}
+				} catch {
+					window.location.replace("/home");
+				}
+			}
+
+			checkAuth();
+
+			document.addEventListener("astro:page-load", () => {
+				const overlay = document.getElementById("auth-overlay");
+				if (overlay) checkAuth();
 			});
 		</script>
 	</head>

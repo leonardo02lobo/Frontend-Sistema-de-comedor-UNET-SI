@@ -11,30 +11,3 @@ import MenuMealView from "../feature/menu/components/MenuMealView.astro";
 </Layout>
 
 <div id="auth-overlay" style="position:fixed;inset:0;z-index:9999;background:#fff;"></div>
-
-<script>
-    async function checkAuth() {
-        const overlay = document.getElementById("auth-overlay");
-        try {
-            const response = await fetch("http://localhost:3001/api/auth/validate-cookie", {
-                method: "GET",
-                credentials: "include",
-            });
-
-            if (!response.ok) {
-                window.location.replace("/home");
-            } else {
-                overlay?.remove();
-            }
-        } catch {
-            window.location.replace("/home");
-        }
-    }
-
-    checkAuth();
-
-    document.addEventListener("astro:page-load", () => {
-        const overlay = document.getElementById("auth-overlay");
-        if (overlay) checkAuth();
-    });
-</script>
