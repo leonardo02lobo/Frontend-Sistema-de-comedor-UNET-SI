@@ -1,49 +1,23 @@
-import type { DashboardMeal, DashboardStat, DashboardSummary } from "./type";
+async function uploadImageMeal(imageInput: HTMLInputElement): Promise<string | undefined> {
+  const file = imageInput.files?.[0];
+  if (!file) {
+    return undefined;
+  }
 
+  const formData = new FormData();
+  formData.append("file", file);
 
-export const dashboardMeals: DashboardMeal[] = [
-  {
-    id: 1,
-    name: "Hamburguesa",
-    image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=80&q=80",
-    remaining: 5,
-  },
-  {
-    id: 2,
-    name: "Pizza",
-    image: "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?auto=format&fit=crop&w=80&q=80",
-    remaining: 0,
-  },
-  {
-    id: 3,
-    name: "Arroz con Pollo",
-    image: "https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=80&q=80",
-    remaining: 8,
-  },
-  {
-    id: 4,
-    name: "Hallaca",
-    image: "https://images.unsplash.com/photo-1601315379734-425a469078de?auto=format&fit=crop&w=80&q=80",
-    remaining: 0,
-  },
-  {
-    id: 5,
-    name: "Pasta Boloñesa",
-    image: "https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?auto=format&fit=crop&w=80&q=80",
-    remaining: 3,
-  },
-];
+  const response = await fetch("http://localhost:3001/api/upload", {
+    method: "POST",
+    credentials: "include",
+    body: formData
+  });
 
-export const dashboardChartMaxPx = 96;
+  const payload = await response.json();
 
-export const dashboardStats: DashboardStat[] = [
-    { label: "Pasta", value: 105 },
-    { label: "Pollo", value: 72 },
-    { label: "Pizza", value: 46 },
-    { label: "Otros", value: 20 },
-];
+  if (!response.ok || !payload?.success) {
+    throw new Error(payload?.error || payload?.message || "No se pudo subir la imagen");
+  }
 
-export const dashboardSummary: DashboardSummary = {
-    consumed: 24,
-    available: 24,
-};
+  return payload.data.url;
+}

@@ -142,12 +142,26 @@ import "../style.css";
       preview.classList.remove("hidden");
     });
 
-    const toBase64 = (file) => new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
+    const uploadImageMeal = async (inputElement) => {
+      const file = inputElement.files?.[0];
+      if (!file) return "";
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("http://localhost:3001/api/upload", {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+
+      const payload = await response.json();
+      if (!response.ok || !payload?.success || !payload?.data?.url) {
+        throw new Error(payload?.error || payload?.message || "No se pudo subir la imagen.");
+      }
+
+      return String(payload.data.url);
+    };
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -159,7 +173,7 @@ import "../style.css";
       const precio = Number(priceValue);
       const stockInicial = sanitizeQuantityValue(quantityInput.value);
 
-      if (!nombrePlatoPrincipal || !descripcion || !ingredientesRaw || !priceValue || Number.isNaN(precio)) {
+      if (!nombrePlatoPrincipal || !descripcion || !ingredientesRaw || !priceValue || Number.isNaN(precio) || precio <= 0) {
         alert("Completa todos los campos");
         return;
       }
@@ -175,12 +189,16 @@ import "../style.css";
         status: "ACTIVE",
       };
 
-      
-
       submitBtn.disabled = true;
       submitBtn.textContent = "Guardando...";
-
+      console.log(body);
+      
       try {
+        const imageUrl = await uploadImageMeal(imageInput);
+        if (imageUrl) {
+          body.image = imageUrl;
+        }
+
         const response = await fetch("http://localhost:3001/api/lunches", {
           method: "POST",
           credentials: "include",
@@ -190,7 +208,8 @@ import "../style.css";
 
         const payload = await response.json();
         if (!response.ok || !payload?.success) {
-          throw new Error(payload?.error || payload?.message || "No se pudo guardar el platillo.");
+          const firstValidationError = Array.isArray(payload?.errors) ? payload.errors[0]?.message : "";
+          throw new Error(firstValidationError || payload?.error || payload?.message || "No se pudo guardar el platillo.");
         }
 
         window.location.href = "/dashboard";

@@ -3,7 +3,7 @@ export type LunchStatus = 'ACTIVE' | 'INACTIVE';
 export type TicketStatus = 'PENDING' | 'APPROVED' | 'CANCELLED';
 const URL = 'http://localhost:3001';
 export const URL_BASE = `${URL}/api`;
-export const URL_BASE_IMAGES = `${URL}/images/`;
+export const URL_BASE_IMAGES = `${URL}`;
 export type NavKey = "home" | "history" | "profile";
 
 export interface Admin {
