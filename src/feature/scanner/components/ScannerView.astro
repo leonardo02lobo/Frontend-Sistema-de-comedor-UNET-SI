@@ -76,7 +76,7 @@ import "../style.css";
         }
 
         async function sendScanPayload(rawValue) {
-            const response = await fetch("/api/tickets/qr/scan", {
+            const response = await fetch("http://localhost:3001/api/tickets/qr/scan", {
                 method: "POST",
                 credentials: "include",
                 headers: {

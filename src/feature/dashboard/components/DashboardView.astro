@@ -208,7 +208,7 @@ import "../style.css";
             const todayKey = getTodayKey();
             const consumed = state.tickets.filter((ticket) => {
                 const status = String(ticket.estado || "").toUpperCase();
-                if (status !== "DELIVERED") return false;
+                if (status !== "APPROVED") return false;
                 const referenceDate = ticket.fechaEntrega || ticket.fecha_entrega || ticket.updatedAt || ticket.fechaSolicitud || ticket.fecha_solicitud;
                 return normalizeDateKey(referenceDate) === todayKey;
             }).length;

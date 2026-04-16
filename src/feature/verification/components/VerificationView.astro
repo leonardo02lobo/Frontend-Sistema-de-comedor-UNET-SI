@@ -163,19 +163,27 @@ import "../style.css";
             const user = data.user || {};
             const lunch = data.lunch || {};
 
+            const API_BASE = "http://localhost:3001";
+            function resolveImageUrl(src) {
+                if (!src || src === "/") return DEFAULT_PHOTO;
+                if (src.startsWith("data:") || src.startsWith("http")) return src;
+                if (src.startsWith("/")) return API_BASE + src;
+                return API_BASE + "/images/" + src;
+            }
+
             setText("verification-user-name", user.fullName || "Usuario reservante");
             setText(
                 "verification-user-id",
-                `Codigo: ${user.codigoCarnet || user.codigo_carnet || data.ticket?.codigoCarnet || data.ticket?.codigo_carnet || "-"}`
+                `Cedula: ${user.codigoCarnet || user.codigo_carnet || data.ticket?.codigoCarnet || data.ticket?.codigo_carnet || "-"}`
             );
-            setText("verification-user-role", `Rol: ${user.role || "-"}`);
+            setText("verification-user-role", `Carrera: ${user.carrera || user.role || "-"}`);
             setText("verification-lunch-name", lunch.nombrePlatoPrincipal || lunch.name || "Almuerzo registrado");
             setText("verification-date", formatDate(scannedAt));
             setText("verification-time", formatTime(scannedAt));
 
             const photoNode = document.getElementById("verification-photo");
             if (photoNode instanceof HTMLImageElement) {
-                photoNode.src = user.photo || DEFAULT_PHOTO;
+                photoNode.src = resolveImageUrl(user.imageURL || user.photo || "");
             }
 
             const statusNode = document.getElementById("verification-status");
