@@ -13,7 +13,7 @@ if (userData) {
     userName.textContent = userData.fullName || "-";
     userEmail.textContent = userData.email || "-";
     carrier.textContent = userData.carrera || "-";
-    userImage.src = URL_BASE_IMAGES+userData.imageURL || "/";
+    userImage.src = URL_BASE_IMAGES+"/images/"+userData.imageURL || "/";
 }
 
 if (userData?.role === "ADMIN") {

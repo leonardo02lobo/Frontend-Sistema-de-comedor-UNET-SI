@@ -21,7 +21,7 @@ if (ticketData) {
     if (lunchImageEl && ticketData.imageUrl) {
         const imageUrl = ticketData.imageUrl.startsWith("data:") || ticketData.imageUrl.startsWith("http")
             ? ticketData.imageUrl
-            : `http://localhost:3001/images/${ticketData.imageUrl}`;
+            : `http://localhost:3001/${ticketData.imageUrl}`;
         lunchImageEl.setAttribute("src", imageUrl);
         lunchImageEl.setAttribute("alt", `Imagen de ${ticketData.title}`);
     }

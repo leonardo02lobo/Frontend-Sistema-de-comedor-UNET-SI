@@ -27,6 +27,7 @@ loginForm?.addEventListener("submit", async (e) => {
             fullName: data.data.fullName,
             role: data.data.role,
             imageURL: data.data.imageURL || data.data.image || "",
+            cedula: data.data.cedula,
         }));
         window.location.href = "/";
     } else {
