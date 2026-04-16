@@ -81,12 +81,12 @@ import "../style.css";
 
       <input type="file" id="image" accept="image/*" hidden />
 
-      <button type="button" id="upload-btn"
-        class="border rounded-xl py-3 flex items-center justify-center gap-2"
+      <label for="image"
+        class="border rounded-xl py-3 flex items-center justify-center gap-2 cursor-pointer"
         style="border-color: var(--color-neutral-200)">
         <Plus />
         Adjuntar Imagen
-      </button>
+      </label>
 
       <img id="preview" class="hidden rounded-xl max-h-40 object-cover" />
     </div>
@@ -103,13 +103,23 @@ import "../style.css";
 </section>
 
 <script lang="js">
-  document.addEventListener("astro:page-load", () => {
+  const setupAddMealView = () => {
+    if (document.body.dataset.addMealViewReady === "true") return;
+
     const quantityInput = document.getElementById("quantity");
-    const uploadBtn = document.getElementById("upload-btn");
     const imageInput = document.getElementById("image");
     const preview = document.getElementById("preview");
     const form = document.getElementById("meal-form");
+
+    if (!(quantityInput instanceof HTMLInputElement)) return;
+    if (!(imageInput instanceof HTMLInputElement)) return;
+    if (!(preview instanceof HTMLImageElement)) return;
+    if (!(form instanceof HTMLFormElement)) return;
+
     const submitBtn = form.querySelector("button[type='submit']");
+    if (!(submitBtn instanceof HTMLButtonElement)) return;
+
+    document.body.dataset.addMealViewReady = "true";
 
     const sanitizeQuantityValue = (value) => {
       const parsed = Number(value);
@@ -125,10 +135,8 @@ import "../style.css";
       quantityInput.value = String(sanitizeQuantityValue(quantityInput.value));
     });
 
-    uploadBtn.addEventListener("click", () => imageInput.click());
-
     imageInput.addEventListener("change", () => {
-      const file = imageInput.files[0];
+      const file = imageInput.files?.[0];
       if (!file) return;
       preview.src = URL.createObjectURL(file);
       preview.classList.remove("hidden");
@@ -167,10 +175,7 @@ import "../style.css";
         status: "ACTIVE",
       };
 
-      const file = imageInput.files[0];
-      if (file) {
-        body.image = await toBase64(file);
-      }
+      
 
       submitBtn.disabled = true;
       submitBtn.textContent = "Guardando...";
@@ -195,5 +200,8 @@ import "../style.css";
         submitBtn.textContent = "+ Agregar";
       }
     });
-  });
+  };
+
+  document.addEventListener("DOMContentLoaded", setupAddMealView);
+  document.addEventListener("astro:page-load", setupAddMealView);
 </script>
