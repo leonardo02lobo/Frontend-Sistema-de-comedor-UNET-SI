@@ -53,10 +53,16 @@ import { featuredMeal } from "../type.ts";
     </div>
 </section>
 <script>
-    const userNameElement = document.querySelector<HTMLElement>("[data-menu-user-name]")
-    const data = localStorage.getItem("userData")
-    if (data && userNameElement) {
-        const userData = JSON.parse(data)
-        userNameElement.textContent = userData.fullName
+    function initMenuUserName() {
+        const userNameElement = document.querySelector<HTMLElement>("[data-menu-user-name]");
+        if (!userNameElement) return;
+        const data = localStorage.getItem("userData");
+        if (data) {
+            const userData = JSON.parse(data);
+            userNameElement.textContent = userData.fullName || "";
+        }
     }
+
+    initMenuUserName();
+    document.addEventListener("astro:page-load", initMenuUserName);
 </script>

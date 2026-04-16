@@ -33,66 +33,17 @@ const {
     <ArrowLeft />
 </button>
 
-<script is:inline>
-    function parseReturnKeys(rawValue) {
-        if (!rawValue) return [];
-
-        try {
-            const parsed = JSON.parse(rawValue);
-            if (!Array.isArray(parsed)) return [];
-            return parsed.map((item) => String(item || "")).filter(Boolean);
-        } catch {
-            return [];
-        }
-    }
-
-    function normalizePath(pathname) {
-        const safePath = String(pathname || "");
-        if (safePath.length > 1 && safePath.endsWith("/")) {
-            return safePath.slice(0, -1);
-        }
-        return safePath || "/";
-    }
-
-    function goBackWithMemory(button) {
-        const fallbackHref = String(button.dataset.fallbackHref || "/");
-        const returnKeys = parseReturnKeys(button.dataset.returnKeys);
-        const currentPath = normalizePath(window.location.pathname);
-
-        for (const key of returnKeys) {
-            const rawValue = sessionStorage.getItem(key);
-            if (!rawValue) continue;
-
-            try {
-                const parsed = JSON.parse(rawValue);
-                const targetPath = String(parsed?.path || "");
-                if (!targetPath) continue;
-                if (normalizePath(targetPath) === currentPath) continue;
-                window.location.href = targetPath;
-                return;
-            } catch {
-                // Ignoramos valores invalidos y continuamos con la siguiente key.
+<script is:inline data-astro-rerun>
+    (function () {
+        var btn = document.querySelector("[data-back-button][data-fallback-href]");
+        if (!btn) return;
+        var fallback = btn.getAttribute("data-fallback-href") || "/";
+        btn.addEventListener("click", function () {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = fallback;
             }
-        }
-
-        if (window.history.length > 1) {
-            window.history.back();
-            return;
-        }
-
-        window.location.href = fallbackHref;
-    }
-
-    function bindBackButtons() {
-        document.querySelectorAll("[data-back-button]").forEach((element) => {
-            if (!(element instanceof HTMLButtonElement)) return;
-            if (element.dataset.backBound === "true") return;
-
-            element.dataset.backBound = "true";
-            element.addEventListener("click", () => goBackWithMemory(element));
         });
-    }
-
-    document.addEventListener("astro:page-load", bindBackButtons);
-    bindBackButtons();
+    })();
 </script>

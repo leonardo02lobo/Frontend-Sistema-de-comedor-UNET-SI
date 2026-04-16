@@ -121,142 +121,131 @@ import "../style.css";
   </form>
 </section>
 
-<script lang="js">
-  document.addEventListener("astro:page-load", () => {
-    let currentImageUrl = "";
-    let lunchId = null;
+<script>
+  const API_BASE = "http://localhost:3001";
 
-    const nameInput = document.getElementById("name");
-    const descriptionInput = document.getElementById("description");
-    const ingredientsInput = document.getElementById("ingredients");
-    const quantityEl = document.getElementById("quantity");
-    const priceInput = document.getElementById("price");
-    const imageInput = document.getElementById("image");
-    const preview = document.getElementById("preview");
-    const uploadBtn = document.getElementById("upload-btn");
-    const form = document.getElementById("edit-meal-form");
+  function resolveImageUrl(src) {
+    if (!src) return "";
+    if (src.startsWith("data:") || src.startsWith("http")) return src;
+    if (src.startsWith("/")) return API_BASE + src;
+    return API_BASE + "/images/" + src;
+  }
 
-    const params = new URLSearchParams(window.location.search);
-    const paramId = Number(params.get("id"));
-    if (Number.isFinite(paramId) && paramId > 0) {
-      lunchId = paramId;
-    }
+  function initEditMeal() {
+    const nameInput   = document.getElementById("name");
+    const descInput   = document.getElementById("description");
+    const ingredInput = document.getElementById("ingredients");
+    const quantityEl  = document.getElementById("quantity");
+    const priceInput  = document.getElementById("price");
+    const imageInput  = document.getElementById("image");
+    const preview     = document.getElementById("preview");
+    const uploadBtn   = document.getElementById("upload-btn");
+    const form        = document.getElementById("edit-meal-form");
 
+    if (!form) return; // no estamos en la página de edición
+
+    var params  = new URLSearchParams(window.location.search);
+    var lunchId = Number(params.get("id")) || null;
+
+    // ── Carga de datos ─────────────────────────────────────────────
     async function loadLunch() {
       if (!lunchId) return;
       try {
-        const response = await fetch(`http://localhost:3001/api/lunches/${lunchId}`, {
-          credentials: "include",
-        });
-        const payload = await response.json();
-        if (!response.ok || !payload?.success) {
-          throw new Error(payload?.error || "No se pudo cargar el platillo.");
-        }
-
-        const lunch = payload.data || {};
-        nameInput.value = lunch.nombrePlatoPrincipal || "";
-        descriptionInput.value = lunch.descripcion || "";
-        ingredientsInput.value = Array.isArray(lunch.ingredientes)
+        var res     = await fetch(API_BASE + "/api/lunches/" + lunchId, { credentials: "include" });
+        var payload = await res.json();
+        if (!res.ok || !payload?.success) throw new Error(payload?.error || "No se pudo cargar el platillo.");
+        var lunch = payload.data || {};
+        nameInput.value    = lunch.nombrePlatoPrincipal || "";
+        descInput.value    = lunch.descripcion || "";
+        ingredInput.value  = Array.isArray(lunch.ingredientes)
           ? lunch.ingredientes.join(", ")
           : String(lunch.ingredientes || "");
-        quantityEl.value = Number(lunch.stockActual || 1);
-        priceInput.value = String(lunch.precio ?? "");
-        currentImageUrl = lunch.image || "";
-        if (currentImageUrl) {
-          preview.src = currentImageUrl.startsWith("data:") || currentImageUrl.startsWith("http")
-            ? currentImageUrl
-            : `http://localhost:3001/images/${currentImageUrl}`;
+        quantityEl.value   = Number(lunch.stockActual || 1);
+        priceInput.value   = String(lunch.precio ?? "");
+        if (lunch.image) {
+          preview.src = resolveImageUrl(lunch.image);
           preview.classList.remove("hidden");
         }
-      } catch (error) {
-        alert(error instanceof Error ? error.message : "No se pudo cargar el platillo.");
+      } catch (err) {
+        alert(err instanceof Error ? err.message : "No se pudo cargar el platillo.");
       }
     }
 
-    document.getElementById("plus")?.addEventListener("click", () => {
+    // ── Upload imagen ──────────────────────────────────────────────
+    async function uploadImage(file) {
+      var fd = new FormData();
+      fd.append("file", file);
+      var res     = await fetch(API_BASE + "/api/upload", { method: "POST", credentials: "include", body: fd });
+      var payload = await res.json();
+      if (!res.ok || !payload?.success || !payload?.data?.url)
+        throw new Error(payload?.error || payload?.message || "No se pudo subir la imagen.");
+      return String(payload.data.url);
+    }
+
+    // ── Eventos ────────────────────────────────────────────────────
+    document.getElementById("plus")?.addEventListener("click", function () {
       quantityEl.value = Math.max(1, Number(quantityEl.value || 1) + 1);
     });
-
-    document.getElementById("minus")?.addEventListener("click", () => {
+    document.getElementById("minus")?.addEventListener("click", function () {
       quantityEl.value = Math.max(1, Number(quantityEl.value || 1) - 1);
     });
-
-    uploadBtn.addEventListener("click", () => {
-      imageInput.click();
-    });
-
-    imageInput.addEventListener("change", () => {
-      const file = imageInput.files[0];
+    uploadBtn.addEventListener("click", function () { imageInput.click(); });
+    imageInput.addEventListener("change", function () {
+      var file = imageInput.files[0];
       if (!file) return;
       preview.src = URL.createObjectURL(file);
       preview.classList.remove("hidden");
     });
 
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      if (!lunchId) {
-        alert("No se encontro el platillo a editar.");
-        return;
-      }
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      if (!lunchId) { alert("No se encontró el platillo a editar."); return; }
 
-      const name = nameInput.value.trim();
-      const description = descriptionInput.value.trim();
-      const ingredients = ingredientsInput.value.trim();
-      const priceValue = priceInput.value.trim();
-      const price = Number(priceValue);
+      var name        = nameInput.value.trim();
+      var description = descInput.value.trim();
+      var ingredients = ingredInput.value.trim();
+      var priceValue  = priceInput.value.trim();
+      var price       = Number(priceValue);
 
-      if (!name || !description || !ingredients || !priceValue || Number.isNaN(price)) {
+      if (!name || !description || !ingredients || !priceValue || isNaN(price)) {
         alert("Completa todos los campos");
         return;
       }
 
-      let imageUrl = currentImageUrl;
-      const file = imageInput.files[0];
-
-      const toBase64 = (f) => new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(f);
-      });
-
-      const submitBtn = form.querySelector("button[type='submit']");
-      submitBtn.disabled = true;
+      var submitBtn = form.querySelector("button[type='submit']");
+      submitBtn.disabled    = true;
       submitBtn.textContent = "Guardando...";
 
       try {
-        const body = {
+        var body = {
           nombrePlatoPrincipal: name,
-          descripcion: description,
-          ingredientes: ingredients.split(",").map(s => s.trim()).filter(Boolean),
-          stockActual: Math.max(1, Number(quantityEl.value || 1)),
-          precio: price,
+          descripcion:          description,
+          ingredientes:         ingredients.split(",").map(function (s) { return s.trim(); }).filter(Boolean),
+          stockActual:          Math.max(1, Number(quantityEl.value || 1)),
+          precio:               price,
         };
+        var file = imageInput.files[0];
+        if (file) body.image = await uploadImage(file);
 
-        if (file) {
-          body.image = await toBase64(file);
-        }
-
-        const response = await fetch(`http://localhost:3001/api/lunches/${lunchId}`, {
-          method: "PATCH",
-          credentials: "include",
+        var res     = await fetch(API_BASE + "/api/lunches/" + lunchId, {
+          method: "PATCH", credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
         });
-
-        const payload = await response.json();
-        if (!response.ok || !payload?.success) {
+        var payload = await res.json();
+        if (!res.ok || !payload?.success)
           throw new Error(payload?.error || payload?.message || "No se pudo actualizar el platillo.");
-        }
 
         window.location.href = "/dashboard";
-      } catch (error) {
-        alert(error instanceof Error ? error.message : "No se pudo actualizar el platillo.");
-        submitBtn.disabled = false;
+      } catch (err) {
+        alert(err instanceof Error ? err.message : "No se pudo actualizar el platillo.");
+        submitBtn.disabled    = false;
         submitBtn.textContent = "Guardar Cambios";
       }
     });
 
     loadLunch();
-  });
+  }
+
+  document.addEventListener("astro:page-load", initEditMeal);
 </script>

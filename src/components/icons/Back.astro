@@ -35,77 +35,42 @@ const isInlineRoute =
     </button>
 </div>
 
-<script lang="js">
-    const normalizePath = (pathname) => {
-        const safePath = String(pathname || "");
-        if (safePath.length > 1 && safePath.endsWith("/")) {
-            return safePath.slice(0, -1);
+<script is:inline data-astro-rerun>
+    (function () {
+        // Fallbacks por ruta para cuando no hay historial del navegador
+        var FALLBACKS = {
+            "/lunch": "/dashboard",
+            "/edit-meal": "/dashboard",
+            "/add-meal": "/dashboard",
+            "/meals-list": "/dashboard",
+            "/escanear": "/dashboard",
+            "/history": "/dashboard",
+            "/verificacion": "/dashboard",
+        };
+
+        function getFallback() {
+            var path = window.location.pathname.replace(/\/+$/, "") || "/";
+            // Ruta exacta
+            if (FALLBACKS[path]) return FALLBACKS[path];
+            // Ruta dinámica (ej: /lunch/7)
+            var segments = path.split("/");
+            var parent = "/" + (segments[1] || "");
+            if (FALLBACKS[parent]) return FALLBACKS[parent];
+            return "/";
         }
-        return safePath || "/";
-    };
 
-    const restoreStoredContext = (storageKey: string) => {
-        const rawValue = sessionStorage.getItem(storageKey);
-        if (!rawValue) return false;
-
-        try {
-            const parsed = JSON.parse(rawValue);
-            const targetPath = String(parsed?.path || "");
-            if (!targetPath) {
-                sessionStorage.removeItem(storageKey);
-                return false;
+        function goBack() {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = getFallback();
             }
-
-            const targetUrl = new URL(targetPath, window.location.origin);
-            if (normalizePath(targetUrl.pathname) === normalizePath(window.location.pathname)) {
-                sessionStorage.removeItem(storageKey);
-                return false;
-            }
-
-            sessionStorage.setItem(
-                "history:restore",
-                JSON.stringify({
-                    path: targetPath,
-                    scrollY: Number(parsed?.scrollY) || 0,
-                    containerSelector: String(parsed?.containerSelector || ""),
-                    containerScrollTop: Number(parsed?.containerScrollTop) || 0,
-                }),
-            );
-            sessionStorage.removeItem(storageKey);
-            window.location.href = targetPath;
-            return true;
-        } catch {
-            sessionStorage.removeItem(storageKey);
-            return false;
         }
-    };
 
-    function bindBackButtons() {
-        document.querySelectorAll("[data-back-button]").forEach((button) => {
-            if (!(button instanceof HTMLButtonElement)) return;
-            if (button.dataset.bound === "true") return;
-            button.dataset.bound = "true";
-            button.addEventListener("click", () => {
-                const currentPath = normalizePath(window.location.pathname);
-
-                if (currentPath === "/") {
-                    if (restoreStoredContext("menu:return")) return;
-                }
-
-                if (currentPath === "/history") {
-                    if (restoreStoredContext("history:return")) return;
-                }
-
-                if (window.history.length > 1) {
-                    window.history.back();
-                } else {
-                    window.location.href = "/";
-                }
-            });
-        });
-    }
-
-    // Enlazar en carga inicial y en cada navegación con ClientRouter
-    bindBackButtons();
-    document.addEventListener("astro:page-load", bindBackButtons);
+        // is:inline se re-ejecuta en cada SPA nav → el botón siempre es nuevo → no necesitamos flag
+        var btn = document.querySelector("[data-back-button]");
+        if (btn) {
+            btn.addEventListener("click", goBack);
+        }
+    })();
 </script>

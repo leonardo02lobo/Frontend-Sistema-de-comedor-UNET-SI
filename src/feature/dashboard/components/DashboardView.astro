@@ -140,17 +140,27 @@ import "../style.css";
     </div>
 </section>
 
-<script lang="js">
-    document.addEventListener("astro:page-load", () => {
-        const dashboardChartMaxPx = 96;
-        const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=80&q=80";
+<script>
+    const API_BASE = "http://localhost:3001";
 
-        const state = {
+    function resolveImageUrl(src) {
+        if (!src) return "";
+        if (src.startsWith("data:") || src.startsWith("http")) return src;
+        if (src.startsWith("/")) return API_BASE + src;
+        return API_BASE + "/images/" + src;
+    }
+
+    function initDashboard() {
+        if (!document.getElementById("platillos-list")) return;
+        var dashboardChartMaxPx = 96;
+        var FALLBACK_IMAGE = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=80&q=80";
+
+        var state = {
             lunches: [],
             tickets: [],
         };
 
-        let pendingDeleteId = null;
+        var pendingDeleteId = null;
 
         function setFeedback(message, isError = false) {
             const feedback = document.getElementById("dashboard-feedback");
@@ -182,7 +192,7 @@ import "../style.css";
                 .map((lunch) => ({
                     lunchId: Number(lunch.id ?? 0),
                     name: lunch.nombrePlatoPrincipal || `Platillo ${lunch.id}`,
-                    image: lunch.image || FALLBACK_IMAGE,
+                    image: lunch.image ? resolveImageUrl(lunch.image) : FALLBACK_IMAGE,
                     price: Number(lunch.precio ?? 0),
                     stockActual: Number(lunch.stockActual ?? 0),
                     stockInicial: Number(lunch.stockInicial ?? 0),
@@ -318,30 +328,52 @@ import "../style.css";
         }
 
         async function loadDashboardData() {
+            console.log("[dashboard] loadDashboardData v3 - tickets opcional");
             setFeedback("");
             try {
-                const [lunchesResponse, ticketsResponse] = await Promise.all([
-                    fetch("http://localhost:3001/api/lunches", { method: "GET", credentials: "include" }),
-                    fetch("http://localhost:3001/api/tickets", { method: "GET", credentials: "include" }),
-                ]);
+                // Lunches: crítico
+                const lunchesResponse = await fetch("http://localhost:3001/api/lunches", {
+                    method: "GET",
+                    credentials: "include",
+                });
+                console.log("[dashboard] lunches HTTP", lunchesResponse.status);
 
-                if (lunchesResponse.status === 401 || ticketsResponse.status === 401) {
+                if (lunchesResponse.status === 401) {
                     setFeedback("Sesion expirada. Inicia sesion nuevamente.", true);
                     return;
                 }
 
-                if (!lunchesResponse.ok || !ticketsResponse.ok) {
-                    throw new Error("No se pudo cargar la informacion del dashboard.");
+                if (!lunchesResponse.ok) {
+                    throw new Error("No se pudo cargar la lista de platillos.");
                 }
 
                 const lunchesPayload = await lunchesResponse.json();
-                const ticketsPayload = await ticketsResponse.json();
-
                 state.lunches = Array.isArray(lunchesPayload?.data) ? lunchesPayload.data : [];
-                state.tickets = Array.isArray(ticketsPayload?.data) ? ticketsPayload.data : [];
+                console.log("[dashboard] lunches:", state.lunches.length);
 
+                // Tickets: opcional
+                try {
+                    const ticketsResponse = await fetch("http://localhost:3001/api/tickets", {
+                        method: "GET",
+                        credentials: "include",
+                    });
+                    console.log("[dashboard] tickets HTTP", ticketsResponse.status);
+                    if (ticketsResponse.ok) {
+                        const ticketsPayload = await ticketsResponse.json();
+                        state.tickets = Array.isArray(ticketsPayload?.data) ? ticketsPayload.data : [];
+                    } else {
+                        state.tickets = [];
+                    }
+                } catch (e) {
+                    console.warn("[dashboard] tickets failed", e);
+                    state.tickets = [];
+                }
+
+                console.log("[dashboard] rendering...");
                 renderDashboard();
+                console.log("[dashboard] render done");
             } catch (error) {
+                console.error("[dashboard] error", error);
                 const message = error instanceof Error ? error.message : "Error al cargar el dashboard.";
                 setFeedback(message, true);
             }
@@ -426,5 +458,8 @@ import "../style.css";
         }
 
         initDashboard();
-    });
+    }
+
+    // astro:page-load dispara en TODA navegación (inicial + SPA forward + SPA back)
+    document.addEventListener("astro:page-load", initDashboard);
 </script>
