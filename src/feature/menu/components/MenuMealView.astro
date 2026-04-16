@@ -20,30 +20,31 @@ import { featuredMeal } from "../type.ts";
                 <article
                     class="relative isolate min-w-0 overflow-visible rounded-xl bg-primario px-3 py-2.5 text-white sm:px-4 sm:py-3 lg:px-5 lg:py-3.5"
                     data-menu-featured
-                    data-name={featuredMeal.name}
                 >
                     <div
                         class="relative z-0 flex min-w-0 flex-col flex-wrap lg:flex-row items-center justify-center gap-x-3 gap-y-1 pr-[5.25rem] sm:gap-x-15 sm:pr-[7rem] lg:pr-36 xl:pr-40"
                     >
                         <h2
+                            id="featured-name"
                             class="min-w-0 shrink text-lg font-bold leading-tight sm:text-2xl md:text-3xl lg:text-5xl"
                         >
                             {featuredMeal.name}
                         </h2>
                         <div
-                            class="flex shrink-0 flex-col items-center gap-0 text-left leading-tight sm:gap-0.5 "
+                            class="flex shrink-0 flex-col items-center gap-0 text-left leading-tight sm:gap-0.5"
                         >
                             <span class="text-xs font-bold sm:text-sm md:text-base lg:text-2xl">
-                                {featuredMeal.specialLabel}
+                                Especial de hoy
                             </span>
-                            <span class="text-[0.7rem] font-semibold opacity-95 sm:text-xs md:text-sm lg:text-xl">
+                            <span id="featured-stock" class="text-[0.7rem] font-semibold opacity-95 sm:text-xs md:text-sm lg:text-xl">
                                 {featuredMeal.specialTime}
                             </span>
                         </div>
                     </div>
                     <img
+                        id="featured-image"
                         src={featuredMeal.image}
-                        alt={`Imagen de ${featuredMeal.name}`}
+                        alt="Especial de hoy"
                         class="absolute -top-5 right-2 z-10 h-[6.5rem] w-[6.5rem] rounded-full border-[3px] border-white object-cover shadow-[0_8px_24px_rgba(0,0,0,0.12)] sm:-top-7 sm:right-2.5 sm:h-30 sm:w-30 sm:border-4 lg:-top-21 lg:right-3 lg:h-40 lg:w-40 xl:h-43 xl:w-43"
                     />
                 </article>
@@ -53,6 +54,16 @@ import { featuredMeal } from "../type.ts";
     </div>
 </section>
 <script>
+    const API_BASE = "http://localhost:3001";
+    const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1604909052743-94e838986d24?auto=format&fit=crop&w=400&q=80";
+
+    function resolveImageUrl(src: string): string {
+        if (!src) return FALLBACK_IMAGE;
+        if (src.startsWith("data:") || src.startsWith("http")) return src;
+        if (src.startsWith("/")) return API_BASE + src;
+        return API_BASE + "/images/" + src;
+    }
+
     function initMenuUserName() {
         const userNameElement = document.querySelector<HTMLElement>("[data-menu-user-name]");
         if (!userNameElement) return;
@@ -63,6 +74,46 @@ import { featuredMeal } from "../type.ts";
         }
     }
 
-    initMenuUserName();
-    document.addEventListener("astro:page-load", initMenuUserName);
+    async function initFeaturedMeal() {
+        const nameEl  = document.getElementById("featured-name");
+        const imgEl   = document.getElementById("featured-image") as HTMLImageElement | null;
+        const stockEl = document.getElementById("featured-stock");
+
+        if (!nameEl || !imgEl) return;
+
+        try {
+            const res     = await fetch(API_BASE + "/api/lunches", { credentials: "include" });
+            const payload = await res.json();
+            const lunches: Array<{ nombrePlatoPrincipal?: string; image?: string; stockActual?: number }> =
+                Array.isArray(payload?.data) ? payload.data : [];
+
+            if (lunches.length === 0) return;
+
+            // Platillo con más stock disponible
+            const featured = lunches.reduce((best, current) => {
+                const bestStock    = Number(best.stockActual    ?? 0);
+                const currentStock = Number(current.stockActual ?? 0);
+                return currentStock > bestStock ? current : best;
+            });
+
+            nameEl.textContent  = featured.nombrePlatoPrincipal || nameEl.textContent;
+            imgEl.src           = resolveImageUrl(featured.image || "");
+            imgEl.alt           = `Imagen de ${featured.nombrePlatoPrincipal || "especial de hoy"}`;
+
+            if (stockEl) {
+                const stock = Number(featured.stockActual ?? 0);
+                stockEl.textContent = stock > 0 ? `${stock} disponibles` : "Últimas unidades";
+            }
+        } catch {
+            // Si falla el fetch, el banner queda con los valores por defecto
+        }
+    }
+
+    function initMenu() {
+        if (!document.querySelector("[data-menu-view]")) return;
+        initMenuUserName();
+        initFeaturedMeal();
+    }
+
+    document.addEventListener("astro:page-load", initMenu);
 </script>
