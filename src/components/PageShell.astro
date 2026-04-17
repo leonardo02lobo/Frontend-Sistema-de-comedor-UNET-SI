@@ -10,6 +10,7 @@ interface Props {
     lunchId?: string;
 }
 const { text = "", icon = "", showContextHeader = true, navActive = "home", lunchId = "" } = Astro.props as Props;
+const isTicketRoute = Astro.url.pathname === "/ticket" || Astro.url.pathname === "/ticket/";
 
 ---
 
@@ -18,7 +19,7 @@ const { text = "", icon = "", showContextHeader = true, navActive = "home", lunc
         <AppNav active={navActive} orientation="vertical" />
     </section>
     <section
-        class=`flex flex-col ${Astro.url.pathname === "/ticket" || Astro.url.pathname === "/ticket/" ? "" : "lg:flex-row"} flex-1 w-full justify-between`>
+        class=`flex flex-col ${isTicketRoute ? "" : "lg:flex-row"} flex-1 w-full ${isTicketRoute ? "justify-start" : "justify-between"}`>
     {showContextHeader && <ContextHeaderProfile icon={icon} />}
         <slot />
     </section>
