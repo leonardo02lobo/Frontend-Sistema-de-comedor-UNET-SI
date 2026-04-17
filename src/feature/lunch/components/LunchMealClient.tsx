@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import {
 	DEFAULT_LUNCH_MEAL,
 	fetchLunchMeal,
+	getUserPendingTicket,
 	reserveLunchTicket,
+	validateCookie,
 } from "../data";
 import type { LunchMeal, LunchMealClientProps } from "../type";
 
@@ -11,6 +13,7 @@ export default function LunchMealClient({ lunchId }: LunchMealClientProps) {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState("");
 	const [reserveLoading, setReserveLoading] = useState(false);
+	const [hasPendingTicket, setHasPendingTicket] = useState(false);
 
 	useEffect(() => {
 		let isActive = true;
@@ -21,10 +24,23 @@ export default function LunchMealClient({ lunchId }: LunchMealClientProps) {
 				setLoading(true);
 				setError("");
 
-				const lunchItem = await fetchLunchMeal(lunchId, controller.signal);
+				const [lunchItem, userInfo] = await Promise.all([
+					fetchLunchMeal(lunchId, controller.signal),
+					validateCookie(controller.signal),
+				]);
 
-				if (isActive) {
-					setMeal(lunchItem);
+				if (!isActive) return;
+
+				setMeal(lunchItem);
+
+				if (userInfo.role === "USER") {
+					const cedula = String(userInfo.cedula || userInfo.email || "").trim();
+					if (cedula) {
+						const pending = await getUserPendingTicket(cedula, controller.signal);
+						if (isActive) {
+							setHasPendingTicket(pending !== null);
+						}
+					}
 				}
 			} catch (err) {
 				if (err instanceof Error && err.name === "AbortError") {
@@ -65,7 +81,7 @@ export default function LunchMealClient({ lunchId }: LunchMealClientProps) {
 		return [meal.ingredients.slice(0, mid), meal.ingredients.slice(mid)];
 	}, [meal.ingredients]);
 
-	const canReserve = meal.id !== null && meal.stockActual > 0 && !loading && !error;
+	const canReserve = meal.id !== null && meal.stockActual > 0 && !loading && !error && !hasPendingTicket;
 
 	const handleReserve = async () => {
 		try {
@@ -145,7 +161,7 @@ export default function LunchMealClient({ lunchId }: LunchMealClientProps) {
 							<circle cx="10" cy="19" r="1" fill="currentColor" stroke="none" />
 							<circle cx="15" cy="19" r="1" fill="currentColor" stroke="none" />
 						</svg>
-						{meal.stockActual > 0 ? "Reservar" : "Agotado"}
+						{hasPendingTicket ? "Ticket pendiente" : meal.stockActual > 0 ? "Reservar" : "Agotado"}
 					</button>
 				</div>
 			</section>

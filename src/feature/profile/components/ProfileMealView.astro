@@ -8,12 +8,75 @@ import SecondButton from "../../../components/SecondButton.astro";
 >
     <section class="flex w-full lg:w-[30%] h-full lg:min-h-[500px] justify-center items-center lg:px-8 py-8">
         <img
-            src=""
+            src="/default-avatar.svg"
             alt="Foto de perfil"
-            class="w-48 h-48 lg:w-56 lg:h-56 rounded-full object-cover border-4 border-neutral-200"
+            class="w-48 h-48 lg:w-56 lg:h-56 rounded-full object-cover border-4"
+            style="border-color: var(--color-primario);"
             id="user-avatar"
             data-user-image
         />
+        <script is:inline>
+            (function () {
+                const DEFAULT_AVATAR = "/default-avatar.svg";
+                const API_BASE = "http://localhost:3001";
+                const img = document.getElementById("user-avatar");
+                if (!(img instanceof HTMLImageElement)) return;
+
+                // Siempre mostrar el avatar por defecto primero (carga instantanea)
+                img.src = DEFAULT_AVATAR;
+
+                function resolveURL(imageURL) {
+                    if (!imageURL || imageURL === "/") return "";
+                    if (imageURL.startsWith("data:")) return imageURL;
+                    if (imageURL.startsWith("http")) return imageURL;
+                    return API_BASE + (imageURL.startsWith("/") ? imageURL : "/" + imageURL);
+                }
+
+                let userImageURL = "";
+                try {
+                    const userData = JSON.parse(localStorage.getItem("userData") || "{}");
+                    userImageURL = resolveURL(String(userData?.imageURL || "").trim());
+                } catch { /* ignore */ }
+
+                if (!userImageURL) return;
+
+                // Usar imagen cacheada si ya la validamos antes (sessionStorage)
+                const cacheKey = "profileAvatar:" + userImageURL;
+                const cached = sessionStorage.getItem(cacheKey);
+                if (cached === "ok") {
+                    img.src = userImageURL;
+                    return;
+                }
+                if (cached === "bad") {
+                    return; // conocida como rota, no reintentar esta sesion
+                }
+
+                // Probar cargar en segundo plano con timeout de 3s
+                const tester = new Image();
+                let settled = false;
+                const timeoutId = setTimeout(function () {
+                    if (settled) return;
+                    settled = true;
+                    tester.src = "";
+                    try { sessionStorage.setItem(cacheKey, "bad"); } catch { /* ignore */ }
+                }, 3000);
+
+                tester.onload = function () {
+                    if (settled) return;
+                    settled = true;
+                    clearTimeout(timeoutId);
+                    try { sessionStorage.setItem(cacheKey, "ok"); } catch { /* ignore */ }
+                    img.src = userImageURL;
+                };
+                tester.onerror = function () {
+                    if (settled) return;
+                    settled = true;
+                    clearTimeout(timeoutId);
+                    try { sessionStorage.setItem(cacheKey, "bad"); } catch { /* ignore */ }
+                };
+                tester.src = userImageURL;
+            })();
+        </script>
     </section>
     <div class="flex w-full lg:w-[70%] flex-col gap-6 lg:max-w-2xl lg:gap-8 lg:px-8 lg:py-16">
         <section class="flex flex-col justify-center items-center text-center gap-6 lg:items-center lg:text-center lg:w-full">

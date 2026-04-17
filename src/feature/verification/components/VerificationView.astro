@@ -32,7 +32,7 @@ import "../style.css";
         <div class="flex items-center justify-center gap-3 md:gap-5 px-2 min-h-0" style="flex: 2;">
             <img
                 id="verification-photo"
-                src="https://images.unsplash.com/photo-1568602471122-7832951cc4c5?auto=format&fit=crop&w=200&q=80"
+                src="/default-avatar.svg"
                 alt="Usuario reservante"
                 class="h-14 w-14 md:h-18 md:w-18 lg:h-24 lg:w-24 rounded-full object-cover shrink-0 border-2"
                 style="border-color: var(--color-primario); width: clamp(3.5rem, 8vw, 6rem); height: clamp(3.5rem, 8vw, 6rem);"
@@ -100,7 +100,7 @@ import "../style.css";
 
 <script lang="js">
     document.addEventListener("astro:page-load", () => {
-        const DEFAULT_PHOTO = "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?auto=format&fit=crop&w=200&q=80";
+        const DEFAULT_PHOTO = "/default-avatar.svg";
 
         function formatDate(dateValue) {
             const date = new Date(dateValue);

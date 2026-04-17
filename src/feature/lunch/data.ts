@@ -1,4 +1,4 @@
-import { URL_BASE, type ApiResponse, type Lunch } from "../../models/type";
+import { URL_BASE, type ApiResponse, type Lunch, type Ticket } from "../../models/type";
 import type {
   LocalUserData,
   LunchMeal,
@@ -126,6 +126,17 @@ export const createTicket = async (
 export const fetchLunchMeal = async (lunchId: string, signal?: AbortSignal): Promise<LunchMeal> => {
   const lunchItem = await getLunchById(lunchId, signal);
   return mapLunchToView(lunchItem);
+};
+
+export const getUserPendingTicket = async (codigoCarnet: string, signal?: AbortSignal): Promise<Ticket | null> => {
+  const response = await fetch(toApiUrl("/tickets"), {
+    method: "GET",
+    credentials: "include",
+    signal,
+  });
+
+  const tickets = await parseApiResponse<Ticket[]>(response, "No se pudo verificar tickets.");
+  return tickets.find((t) => t.codigoCarnet === codigoCarnet && t.estado === "PENDING") ?? null;
 };
 
 export const reserveLunchTicket = async (meal: LunchMeal): Promise<ReserveTicketResult> => {

@@ -1,0 +1,135 @@
+---
+import ArrowLeft from "../../../components/icons/ArrowLeft.astro";
+import "../style.css";
+---
+
+<section class="dashboard-view flex flex-1 flex-col bg-neutral-0 px-4 py-4 gap-4 md:px-6 md:py-6 md:gap-5 lg:px-10 lg:py-8 lg:gap-6 overflow-y-auto">
+
+  <a href="/dashboard" class="back-btn w-fit p-2 rounded-lg transition-colors"
+     style="color: var(--color-neutral-900);">
+    <ArrowLeft />
+  </a>
+
+  <h1 class="text-2xl md:text-3xl lg:text-4xl font-bold text-center"
+      style="color: var(--color-neutral-900)">
+    Agregar Usuario
+  </h1>
+
+  <form id="user-form"
+        class="w-full max-w-2xl mx-auto flex flex-col gap-4 rounded-2xl p-5 md:p-6 lg:p-8 shadow"
+        style="background: var(--color-neutral-0)">
+
+    <div class="flex flex-col gap-1">
+      <label class="font-medium">Nombre Completo</label>
+      <input id="fullName" type="text" placeholder="Ej: Juan Pérez"
+        class="rounded-xl border px-3 py-2"
+        style="border-color: var(--color-neutral-200)" />
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label class="font-medium">Correo Electrónico</label>
+      <input id="email" type="email" placeholder="Ej: juan@comedor.unet"
+        class="rounded-xl border px-3 py-2"
+        style="border-color: var(--color-neutral-200)" />
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label class="font-medium">Contraseña</label>
+      <input id="password" type="password" placeholder="Mínimo 8 caracteres"
+        class="rounded-xl border px-3 py-2"
+        style="border-color: var(--color-neutral-200)" />
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label class="font-medium">Cédula</label>
+      <input id="cedula" type="text" placeholder="Ej: V-12345678"
+        class="rounded-xl border px-3 py-2"
+        style="border-color: var(--color-neutral-200)" />
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label class="font-medium">Carrera</label>
+      <input id="carrera" type="text" placeholder="Ej: Ingeniería de Sistemas"
+        class="rounded-xl border px-3 py-2"
+        style="border-color: var(--color-neutral-200)" />
+    </div>
+
+    <p id="user-form-feedback" class="text-sm font-semibold text-center hidden"></p>
+
+    <button type="submit"
+      id="user-submit-btn"
+      class="mt-4 rounded-xl py-3 font-semibold text-white transition-colors"
+      style="background: var(--color-primario)">
+      + Agregar Usuario
+    </button>
+
+  </form>
+
+</section>
+
+<script lang="js">
+  function setupAddUserView() {
+    const form = document.getElementById("user-form");
+    if (!(form instanceof HTMLFormElement)) return;
+    if (form.dataset.bound === "true") return;
+    form.dataset.bound = "true";
+
+    const submitBtn = document.getElementById("user-submit-btn");
+    const feedback  = document.getElementById("user-form-feedback");
+
+    function setFeedback(msg, isError = false) {
+      if (!feedback) return;
+      if (!msg) { feedback.classList.add("hidden"); return; }
+      feedback.textContent = msg;
+      feedback.classList.remove("hidden");
+      feedback.style.color = isError ? "var(--color-error)" : "var(--color-exito)";
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      setFeedback("");
+
+      const fullName = document.getElementById("fullName").value.trim();
+      const email    = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const cedula   = document.getElementById("cedula").value.trim();
+      const carrera  = document.getElementById("carrera").value.trim();
+
+      if (!fullName || !email || !password || !cedula) {
+        setFeedback("Completa todos los campos obligatorios.", true);
+        return;
+      }
+      if (password.length < 8) {
+        setFeedback("La contraseña debe tener al menos 8 caracteres.", true);
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Guardando...";
+
+      try {
+        const response = await fetch("http://localhost:3001/api/admins", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fullName, email, password, cedula, carrera, role: "USER" }),
+        });
+
+        const payload = await response.json();
+        if (!response.ok || !payload?.success) {
+          const firstErr = Array.isArray(payload?.errors) ? payload.errors[0]?.message : "";
+          throw new Error(firstErr || payload?.error || payload?.message || "No se pudo crear el usuario.");
+        }
+
+        window.location.href = "/users-list";
+      } catch (error) {
+        setFeedback(error instanceof Error ? error.message : "No se pudo crear el usuario.", true);
+        submitBtn.disabled = false;
+        submitBtn.textContent = "+ Agregar Usuario";
+      }
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", setupAddUserView);
+  document.addEventListener("astro:page-load", setupAddUserView);
+</script>
