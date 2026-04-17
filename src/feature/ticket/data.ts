@@ -40,9 +40,13 @@ if(user){
 
 if (ticketData) {
     if (lunchNameEl) lunchNameEl.textContent = ticketData.title || "Plato no disponible";
-    const rawImage = ticketData.imageUrl || ticketData.image || "";
-    if (lunchImageEl && rawImage) {
-        const imageUrl = resolveTicketImageUrl(rawImage);
+    if (lunchImageEl && ticketData.imageUrl) {
+        const raw = ticketData.imageUrl;
+        const imageUrl = raw.startsWith("data:") || raw.startsWith("http")
+            ? raw
+            : raw.startsWith("/")
+                ? `http://localhost:3001${raw}`
+                : `http://localhost:3001/images/${raw}`;
         lunchImageEl.setAttribute("src", imageUrl);
         lunchImageEl.setAttribute("alt", `Imagen de ${ticketData.title}`);
     }

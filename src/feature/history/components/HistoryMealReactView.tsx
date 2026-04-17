@@ -64,12 +64,15 @@ const parseId = (value: unknown) => {
     return Number.isFinite(numberValue) ? numberValue : 0;
 };
 
+const API_ORIGIN = URL_BASE_IMAGES.replace(/\/images\/?$/, "");
+
 const resolveImageUrl = (value: unknown) => {
     const image = String(value || "").trim();
     if (!image) return FALLBACK_IMAGE;
     if (image.startsWith("data:") || image.startsWith("http://") || image.startsWith("https://")) {
         return image;
     }
+    if (image.startsWith("/")) return `${API_ORIGIN}${image}`;
     return `${URL_BASE_IMAGES}${image}`;
 };
 

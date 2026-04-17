@@ -1,12 +1,16 @@
 import { URL_BASE_IMAGES } from "../../../models/type";
 
+const API_ORIGIN = URL_BASE_IMAGES.replace(/\/images\/?$/, "");
+
 export default function MealCard({ meal }) {
     const rawImage = meal.image || "";
-    const image = rawImage.startsWith("data:") || rawImage.startsWith("http")
-        ? rawImage
-        : rawImage
-            ? URL_BASE_IMAGES + rawImage
-            : "";
+    const image = !rawImage
+        ? ""
+        : rawImage.startsWith("data:") || rawImage.startsWith("http")
+            ? rawImage
+            : rawImage.startsWith("/")
+                ? API_ORIGIN + rawImage
+                : URL_BASE_IMAGES + rawImage;
     const category = meal.category ? meal.category.trim() : "";
     const stock = Number.isFinite(Number(meal.stockActual)) ? Number(meal.stockActual) : null;
 
